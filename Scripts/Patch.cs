@@ -4,9 +4,21 @@ using UnityEngine;
 
 namespace VDOM
 {
+    public enum PatchType
+    {   
+        Redraw,
+        Text,
+        Attrs,
+        RemoveLast,
+        Append,
+        Remove,
+        Reorder,
+        Widget
+    }
+    
     public interface IPatch
     {
-        string GetType();
+        PatchType GetType();
         GameObject GetGameObject();
         int GetIndex();
     }
@@ -39,7 +51,7 @@ namespace VDOM
             this.gameObject = null;
         }
 
-        public string GetType() => "REDRAW";
+        public PatchType GetType() => PatchType.Redraw;
         public GameObject GetGameObject() => this.gameObject;
         public int GetIndex() => this.index;
 
@@ -58,7 +70,7 @@ namespace VDOM
             this.gameObject = null;
         }
 
-        public string GetType() => "TEXT";
+        public PatchType GetType() => PatchType.Text;
         public GameObject GetGameObject() => this.gameObject;
         public int GetIndex() => this.index;
     }
@@ -78,7 +90,7 @@ namespace VDOM
             this.gameObject = null;
         }
 
-        public string GetType() => "ATTRS";
+        public PatchType GetType() => PatchType.Attrs;
         public GameObject GetGameObject() => this.gameObject;
         public int GetIndex() => this.index;
     }
@@ -100,7 +112,7 @@ namespace VDOM
             this.gameObject = null;
         }
 
-        public string GetType() => "REMOVE_LAST";
+        public PatchType GetType() => PatchType.RemoveLast;
         public GameObject GetGameObject() => this.gameObject;
         public int GetIndex() => this.index;
     }
@@ -122,7 +134,7 @@ namespace VDOM
             this.gameObject = null;
         }
 
-        public string GetType() => "APPEND";
+        public PatchType GetType() => PatchType.Append;
         public GameObject GetGameObject() => this.gameObject;
         public int GetIndex() => this.index;
     }
@@ -145,7 +157,7 @@ namespace VDOM
             this.gameObject = null;
         }
 
-        public string GetType() => "REORDER";
+        public PatchType GetType() => PatchType.Reorder;
         public GameObject GetGameObject() => this.gameObject;
         public int GetIndex() => this.index;
 
@@ -175,7 +187,27 @@ namespace VDOM
 
         public Remove(int index) : this(index, new IPatch[] { }, null) { }
 
-        public string GetType() => "REMOVE";
+        public PatchType GetType() => PatchType.Remove;
+        public GameObject GetGameObject() => this.gameObject;
+        public int GetIndex() => this.index;
+    }
+
+    public struct WidgetPatch : IPatch
+    {
+        public int index;
+        public GameObject gameObject;
+        private Widget oldWidget;
+        private Widget newWidget;
+
+        public WidgetPatch(int index, Widget oldWidget, Widget newWidget)
+        {
+            this.index = index;
+            this.oldWidget = oldWidget;
+            this.newWidget = newWidget;
+            this.gameObject = null;
+        }
+        
+        public PatchType GetType() => PatchType.Widget;
         public GameObject GetGameObject() => this.gameObject;
         public int GetIndex() => this.index;
     }

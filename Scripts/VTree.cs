@@ -8,7 +8,8 @@ namespace VDOM
     {
         Text,
         Node,
-        KeyedNode
+        KeyedNode,
+        Widget
     }
 
     public interface IVTree
@@ -37,7 +38,7 @@ namespace VDOM
 
         public readonly Attributes attrs;
 
-        private int descendantsCount;
+        private readonly int descendantsCount;
         public VNode(string tag, IAttribute[] attrs, IVTree[] kids)
         {
             this.tag = tag;
@@ -63,7 +64,7 @@ namespace VDOM
         public readonly (string, IVTree)[] kids;
         public readonly Attributes attrs;
 
-        private int descendantsCount;
+        private readonly int descendantsCount;
         public KeyedVNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids)
         {
             this.tag = tag;
@@ -71,15 +72,30 @@ namespace VDOM
             this.attrs = new Attributes(attrs);
             this.descendantsCount = 0;
 
-            foreach (var kid in kids)
+            foreach (var (_, kid) in kids)
             {
-                this.descendantsCount += kid.Item2.GetDescendantsCount();
+                this.descendantsCount += kid.GetDescendantsCount();
             }
             this.descendantsCount += kids.Length;
         }
 
         public VTreeType GetType() => VTreeType.KeyedNode;
         public int GetDescendantsCount() => this.descendantsCount;
-
     }
+
+    public abstract class Widget : IVTree
+    {
+        public Attributes attrs;
+        
+        public abstract int GetDescendantsCount();
+
+        public abstract GameObject Init();
+
+        public abstract IVTree Render();
+
+        public abstract void Destroy(GameObject go);
+
+        public VTreeType GetType() => VTreeType.Widget;
+    }
+    
 }

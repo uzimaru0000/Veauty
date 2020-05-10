@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -61,6 +62,15 @@ namespace VDOM
                             DiffKeyedNodes((KeyedVNode)x, keyedVNode, ref patches, index);
                         }
                         return;
+                    case Widget widget:
+                        if (x.GetType() == VTreeType.Widget)
+                        {
+                            PushPatch(ref patches, new WidgetPatch(index, widget, (Widget)y));
+                            return;
+                        }
+                        return;
+                    default:
+                        throw new Exception("Invalid VTree type");
                 }
             }
         }
