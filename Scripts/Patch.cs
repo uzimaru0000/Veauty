@@ -83,36 +83,14 @@ namespace VDOM
 
             switch (vTree)
             {
-                case VNode vNode:
+                case IParent parent:
                 {
-                    var kids = vNode.kids;
+                    var kids = parent.GetKids();
                     var children = gameObjectNode.transform;
                     for (var j = 0; j < kids.Length; j++)
                     {
                         low++;
                         var kid = kids[j];
-                        var nextLow = low + kid.GetDescendantsCount();
-                        if (low <= index && index <= nextLow)
-                        {
-                            i = AddGameObjectNodesHelper(children.GetChild(i).gameObject, kid, ref patches, i, low, nextLow);
-                            if (i >= patches.Length || (index = patch.GetIndex()) > high)
-                            {
-                                return i;
-                            }
-                        }
-
-                        low = nextLow;
-                    }
-                    break;
-                }
-                case KeyedVNode keyedVNode:
-                {
-                    var kids = keyedVNode.kids;
-                    var children = gameObjectNode.transform;
-                    for (var j = 0; j < kids.Length; j++)
-                    {
-                        low++;
-                        var (_, kid) = kids[j];
                         var nextLow = low + kid.GetDescendantsCount();
                         if (low <= index && index <= nextLow)
                         {
@@ -209,10 +187,10 @@ namespace VDOM
                 {
                     return ApplyPatchReorder(go, reorder);
                 }
-                case WidgetPatch widget:
-                {
-                    return ApplyPatchWidget(go, widget.oldWidget, widget.newWidget);
-                }
+                // case WidgetPatch widget:
+                // {
+                //     return ApplyPatchWidget(go, widget.oldWidget, widget.newWidget);
+                // }
             }
             return go;
         }
@@ -486,27 +464,6 @@ namespace VDOM
         }
 
         public PatchType GetType() => PatchType.Remove;
-        public GameObject GetGameObject() => this.gameObject;
-        public void SetGameObject(in GameObject go) => this.gameObject = go;
-        public int GetIndex() => this.index;
-    }
-
-    public struct WidgetPatch : IPatch
-    {
-        public int index;
-        public GameObject gameObject;
-        public Widget oldWidget;
-        public Widget newWidget;
-
-        public WidgetPatch(int index, Widget oldWidget, Widget newWidget)
-        {
-            this.index = index;
-            this.oldWidget = oldWidget;
-            this.newWidget = newWidget;
-            this.gameObject = null;
-        }
-        
-        public PatchType GetType() => PatchType.Widget;
         public GameObject GetGameObject() => this.gameObject;
         public void SetGameObject(in GameObject go) => this.gameObject = go;
         public int GetIndex() => this.index;

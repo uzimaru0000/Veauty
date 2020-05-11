@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace VDOM
 {
@@ -22,10 +21,11 @@ namespace VDOM
 
         static void Helper(IVTree x, IVTree y, ref List<IPatch> patches, int index)
         {
-            if (x.Equals(y))
-            {
-                return;
-            }
+            // TODO: Implement `Equals` method on each node
+            // if (x.Equals(y))
+            // {
+            //     return;
+            // }
 
             if (x.GetType() != y.GetType())
             {
@@ -65,7 +65,7 @@ namespace VDOM
                     case Widget widget:
                         if (x.GetType() == VTreeType.Widget)
                         {
-                            PushPatch(ref patches, new WidgetPatch(index, widget, (Widget)y));
+                            DiffWidget((Widget) x, widget, ref patches, index);
                             return;
                         }
                         return;
@@ -129,21 +129,21 @@ namespace VDOM
 
             foreach (var kv in x.attrs)
             {
-                diff.attrs[kv.Key] = diffProp(kv.Value, y.attrs.ContainsKey(kv.Key) ? y.attrs[kv.Key] : new Dictionary<string, IAttribute>());
+                diff.attrs[kv.Key] = DiffProp(kv.Value, y.attrs.ContainsKey(kv.Key) ? y.attrs[kv.Key] : new Dictionary<string, IAttribute>());
             }
 
             foreach (var kv in y.attrs)
             {
                 if (!x.attrs.ContainsKey(kv.Key))
                 {
-                    diff.attrs[kv.Key] = diffProp(new Dictionary<string, IAttribute>(), kv.Value);
+                    diff.attrs[kv.Key] = DiffProp(new Dictionary<string, IAttribute>(), kv.Value);
                 }
             }
 
             return diff;
         }
 
-        static Dictionary<string, IAttribute> diffProp(
+        static Dictionary<string, IAttribute> DiffProp(
             Dictionary<string, IAttribute> x,
             Dictionary<string, IAttribute> y
         )
@@ -202,11 +202,12 @@ namespace VDOM
                 PushPatch(ref patches, new Append(index, xLen, yKids));
             }
 
-            var minLen = Mathf.Min(xLen, yLen);
+            var minLen = xLen < yLen ? xLen : yLen;
             for (var i = 0; i < minLen; i++)
             {
+                index++;
                 var xKid = xKids[i];
-                Helper(xKid, yKids[i], ref patches, ++index);
+                Helper(xKid, yKids[i], ref patches, index);
                 index += xKid.GetDescendantsCount();
             }
         }
@@ -412,6 +413,14 @@ namespace VDOM
             }
 
             RemoveNode(ref changes, ref localPatches, key + "UniVDOM", vTree, index);
+        }
+
+        static void DiffWidget(Widget x, Widget y, ref List<IPatch> patches, int index)
+        {
+            var oldTree = x.Render();
+            var newTree = y.Render();
+
+            Helper(oldTree, newTree, ref patches, index);
         }
 
         static VNode Dekey(KeyedVNode keyedNode)

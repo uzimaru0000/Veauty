@@ -18,6 +18,11 @@ namespace VDOM
         int GetDescendantsCount();
     }
 
+    public interface IParent
+    {
+        IVTree[] GetKids();
+    }
+
     public struct VText : IVTree
     {
         public readonly string text;
@@ -31,7 +36,7 @@ namespace VDOM
 
     }
 
-    public struct VNode : IVTree
+    public struct VNode : IVTree, IParent
     {
         public readonly string tag;
         public readonly IVTree[] kids;
@@ -55,47 +60,53 @@ namespace VDOM
 
         public VTreeType GetType() => VTreeType.Node;
         public int GetDescendantsCount() => this.descendantsCount;
-
+        public IVTree[] GetKids() => this.kids;
     }
 
-    public struct KeyedVNode : IVTree
+    public struct KeyedVNode : IVTree, IParent
     {
         public readonly string tag;
         public readonly (string, IVTree)[] kids;
         public readonly Attributes attrs;
 
         private readonly int descendantsCount;
+        private readonly IVTree[] dekeyedKids;
         public KeyedVNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids)
         {
             this.tag = tag;
             this.kids = kids;
             this.attrs = new Attributes(attrs);
             this.descendantsCount = 0;
+            this.dekeyedKids = new IVTree[kids.Length];
 
+            var i = 0;
             foreach (var (_, kid) in kids)
             {
                 this.descendantsCount += kid.GetDescendantsCount();
+                this.dekeyedKids[i++] = kid;
             }
             this.descendantsCount += kids.Length;
         }
 
         public VTreeType GetType() => VTreeType.KeyedNode;
         public int GetDescendantsCount() => this.descendantsCount;
+
+        public IVTree[] GetKids() => this.dekeyedKids;
     }
 
     public abstract class Widget : IVTree
     {
         public Attributes attrs;
-        
-        public abstract int GetDescendantsCount();
 
-        public abstract GameObject Init();
+        public abstract GameObject Init(GameObject go);
 
         public abstract IVTree Render();
 
         public abstract void Destroy(GameObject go);
 
         public VTreeType GetType() => VTreeType.Widget;
+        
+        public abstract int GetDescendantsCount();
     }
     
 }

@@ -19,7 +19,7 @@ namespace VDOM
                 case KeyedVNode vNode:
                     return CreateVNode(vNode);
                 case Widget widget:
-                    return widget.Init();
+                    return widget.Init(Render(widget.Render()));
                 default:
                     return null;
             }
@@ -28,7 +28,7 @@ namespace VDOM
         private static GameObject CreateGameObject(string name)
         {
             var go = new GameObject(name);
-            go.AddComponent<RectTransform>();
+            var rectTransform = go.AddComponent<RectTransform>();
             
             return go;
         }
@@ -41,6 +41,7 @@ namespace VDOM
             textComponent.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
             textComponent.text = text;
             textComponent.alignment = TextAnchor.MiddleCenter;
+            textComponent.color = Color.black;
 
             return go;
         }
@@ -75,16 +76,7 @@ namespace VDOM
 
         private static void AppendChild(GameObject parent, GameObject kid)
         {
-            var parentRectTransform = parent.GetComponent<RectTransform>();
-            var kidRectTransform = kid.GetComponent<RectTransform>();
-
-            if (parentRectTransform && kidRectTransform)
-            {
-                kidRectTransform.sizeDelta = parentRectTransform.sizeDelta;
-                kidRectTransform.anchoredPosition = new Vector2(0.5f, 0.5f);
-            }
-            
-            kid.transform.SetParent(parent.transform);
+            kid.transform.SetParent(parent.transform, false);
         }
 
         private static void ApplyAttrs(GameObject go, Attributes attrs)
