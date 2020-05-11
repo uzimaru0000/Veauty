@@ -1,6 +1,6 @@
 {
-  "name": "com.uzimaru0000.unity-vdom",
-  "displayName": "Unity-VDOM",
+  "name": "com.uzimaru0000.veauty",
+  "displayName": "Veauty",
   "version": "0.1.0",
   "unity": "2018.4",
   "description": "Implementation of Virtual-Dom for Unity3D",

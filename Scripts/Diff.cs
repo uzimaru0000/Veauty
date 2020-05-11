@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace VDOM
+namespace Veauty
 {
     public static class Diff
     {

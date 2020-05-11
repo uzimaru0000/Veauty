@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UI = UnityEngine.UI;
 
-namespace VDOM
+namespace Veauty 
 {
     public static class Patch
     {

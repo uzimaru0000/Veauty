@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UI = UnityEngine.UI;
 
-namespace VDOM
+namespace Veauty
 {
     public static class Renderer
     {
