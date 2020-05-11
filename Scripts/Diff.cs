@@ -247,8 +247,8 @@ namespace VDOM
                     continue;
                 }
 
-                var (xNextKey, xNextNode) = xKids.Length < xIndex + 1 ? xKids[xIndex + 1] : ("", null);
-                var (yNextKey, yNextNode) = yKids.Length < yIndex + 1 ? yKids[yIndex + 1] : ("", null);
+                var (xNextKey, xNextNode) = xIndex + 1 < xKids.Length ? xKids[xIndex + 1] : ("", null);
+                var (yNextKey, yNextNode) = yIndex + 1 < yKids.Length ? yKids[yIndex + 1] : ("", null);
 
                 oldMatch = yKey == xNextKey;
                 newMatch = xKey == yNextKey;
@@ -352,7 +352,7 @@ namespace VDOM
         {
             if (!changes.ContainsKey(key))
             {
-                var newEntry = new Entry("INSERT", vTree, yIndex);
+                var newEntry = new Entry(Entry.Type.Insert, vTree, yIndex);
                 inserts.Add(new Reorder.Insert { index = yIndex, entry = newEntry });
                 changes[key] = newEntry;
 
@@ -361,11 +361,11 @@ namespace VDOM
 
             var entry = changes[key];
 
-            if (entry.tag == "REMOVE")
+            if (entry.tag == Entry.Type.Remove)
             {
                 inserts.Add(new Reorder.Insert { index = yIndex, entry = entry });
 
-                entry.tag = "MOVE";
+                entry.tag = Entry.Type.Move;
                 var subPatches = new List<IPatch>();
                 Helper(entry.vTree, vTree, ref subPatches, entry.index);
                 entry.index = yIndex;
@@ -393,7 +393,7 @@ namespace VDOM
             {
                 var patch = PushPatch(ref localPatches, new Remove(index));
 
-                changes[key] = new Entry("REMOVE", vTree, index);
+                changes[key] = new Entry(Entry.Type.Remove, vTree, index);
                 changes[key].data = patch;
 
                 return;
@@ -401,9 +401,9 @@ namespace VDOM
 
             var entry = changes[key];
 
-            if (entry.tag == "INSERT")
+            if (entry.tag == Entry.Type.Insert)
             {
-                entry.tag = "REMOVE";
+                entry.tag = Entry.Type.Remove;
                 var subPatches = new List<IPatch>();
                 Helper(vTree, entry.vTree, ref subPatches, index);
 
