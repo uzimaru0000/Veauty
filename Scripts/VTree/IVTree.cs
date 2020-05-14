@@ -2,7 +2,6 @@ namespace Veauty.VTree
 {
     public enum VTreeType
     {
-        Text,
         Node,
         KeyedNode,
         Widget

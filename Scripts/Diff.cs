@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Veauty.Patch;
 using Veauty.VTree;
 
 namespace Veauty
@@ -45,29 +46,26 @@ namespace Veauty
             {
                 switch (y)
                 {
-                    case VText yText:
-                        if (x is VText xText && xText.text != yText.text)
-                        {
-                            PushPatch(ref patches, new Text(index, yText.text));
-                        }
-                        return;
                     case BaseNode yNode:
                         if (x is BaseNode xNode)
                         {
                             DiffNodes(xNode, yNode, ref patches, index);
                         }
+
                         return;
                     case BaseKeyedNode yKeyedVNode:
                         if (x is BaseKeyedNode xKeyedNode)
                         {
                             DiffKeyedNodes(xKeyedNode, yKeyedVNode, ref patches, index);
                         }
+
                         return;
                     case Widget yWidget:
                         if (x is Widget xWidget)
                         {
                             DiffWidget(xWidget, yWidget, ref patches, index);
                         }
+
                         return;
                     default:
                         throw new Exception("Invalid VTree type");
@@ -83,7 +81,7 @@ namespace Veauty
         )
         {
             var attach = CheckComponentType(x, y, index);
-            
+
             // Not TypedNode and not Equal tag name
             if (attach == null && x.tag != y.tag)
             {
@@ -107,14 +105,14 @@ namespace Veauty
             BaseKeyedNode y,
             ref List<IPatch> patches,
             int index
-        ) 
+        )
         {
             if (x.tag != y.tag)
             {
                 PushPatch(ref patches, new Redraw(index, y));
                 return;
             }
-            
+
             CheckAttributes(x.attrs, y.attrs, ref patches, index);
 
             DiffKeyedKids(x, y, ref patches, index);
@@ -126,7 +124,7 @@ namespace Veauty
             {
                 return new Attach(index, xNode.GetComponentType(), yNode.GetComponentType());
             }
-            
+
             return null;
         }
 
@@ -151,15 +149,18 @@ namespace Veauty
         {
             var xAttrs = x.attrs;
             var yAttrs = y.attrs;
-            
+
             var diff = new Dictionary<string, IAttribute>();
 
             foreach (var kv in xAttrs)
             {
                 var key = kv.Key;
-                if (yAttrs.ContainsKey(key) && xAttrs[key].Equals(yAttrs[key]))
+                if (yAttrs.ContainsKey(key))
                 {
-                    diff[key] = yAttrs[key];
+                    if (!xAttrs[key].Equals(yAttrs[key]))
+                    {
+                        diff[key] = yAttrs[key];
+                    }
                 }
                 else
                 {
@@ -349,7 +350,7 @@ namespace Veauty
             if (!changes.ContainsKey(key))
             {
                 var newEntry = new Entry(Entry.Type.Insert, vTree, yIndex);
-                inserts.Add(new Reorder.Insert { index = yIndex, entry = newEntry });
+                inserts.Add(new Reorder.Insert {index = yIndex, entry = newEntry});
                 changes[key] = newEntry;
 
                 return;
@@ -359,7 +360,7 @@ namespace Veauty
 
             if (entry.tag == Entry.Type.Remove)
             {
-                inserts.Add(new Reorder.Insert { index = yIndex, entry = entry });
+                inserts.Add(new Reorder.Insert {index = yIndex, entry = entry});
 
                 entry.tag = Entry.Type.Move;
                 var subPatches = new List<IPatch>();
@@ -418,7 +419,7 @@ namespace Veauty
             Helper(oldTree, newTree, ref patches, index);
         }
 
-        static Node<T> Dekey<T>(KeyedNode<T> keyedNode) where T : MonoBehaviour 
+        static Node<T> Dekey<T>(KeyedNode<T> keyedNode) where T : MonoBehaviour
         {
             var kids = new IVTree[keyedNode.kids.Length];
             for (var i = 0; i < keyedNode.kids.Length; i++)
@@ -434,6 +435,5 @@ namespace Veauty
 
             return new Node<T>(keyedNode.tag, attrs.ToArray(), kids);
         }
-
     }
 }
