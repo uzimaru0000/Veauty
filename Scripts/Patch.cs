@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using UnityEditor.Graphs;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UI = UnityEngine.UI;
+using Veauty.VTree;
 
 namespace Veauty 
 {
@@ -86,41 +88,36 @@ namespace Veauty
                     return i;
                 }
             }
-
-            switch (vTree)
+            
+            if (vTree is IParent parent)
             {
-                case IParent parent:
+                var kids = parent.GetKids();
+                var children = gameObjectNode.transform;
+                for (var j = 0; j < kids.Length; j++)
                 {
-                    var kids = parent.GetKids();
-                    var children = gameObjectNode.transform;
-                    for (var j = 0; j < kids.Length; j++)
+                    low++;
+                    var kid = kids[j];
+                    var nextLow = low + kid.GetDescendantsCount();
+                    if (low <= index && index <= nextLow)
                     {
-                        low++;
-                        var kid = kids[j];
-                        var nextLow = low + kid.GetDescendantsCount();
-                        if (low <= index && index <= nextLow)
+                        i = AddGameObjectNodesHelper(children.GetChild(j).gameObject, kid, ref patches, i, low, nextLow);
+                        
+                        if (i < patches.Length)
                         {
-                            i = AddGameObjectNodesHelper(children.GetChild(j).gameObject, kid, ref patches, i, low, nextLow);
-                            
-                            
-                            if (i < patches.Length)
-                            {
-                                patch = patches[i];
-                                index = patch.GetIndex();
-                                if (index > high)
-                                {
-                                    return i;
-                                }
-                            }
-                            else
+                            patch = patches[i];
+                            index = patch.GetIndex();
+                            if (index > high)
                             {
                                 return i;
                             }
                         }
-
-                        low = nextLow;
+                        else
+                        {
+                            return i;
+                        }
                     }
-                    break;
+
+                    low = nextLow;
                 }
             }
 
@@ -149,12 +146,10 @@ namespace Veauty
                 case Redraw redraw:
                 {
                     return ApplyPatchRedraw(go, redraw.vTree);
-                    return go;
                 }
                 case Attrs attrs:
                 {
                     return ApplyAttrs(go, attrs.attrs);
-                    return go;
                 }
                 case Text text:
                 {
@@ -202,13 +197,25 @@ namespace Veauty
                 {
                     return ApplyPatchReorder(go, reorder);
                 }
+                case Attach attach:
+                {
+                    return ApplyPatchAttach(go, attach);
+                }
             }
             return go;
         }
 
         private static GameObject ApplyPatchRedraw(GameObject go, IVTree vTree)
         {
+            var parent = go.transform.parent;
             var newNode = Renderer.Render(vTree);
+
+            if (parent && newNode != go)
+            {
+                GameObject.Destroy(go);
+                newNode.transform.SetParent(parent, false);
+            }
+            
             return newNode;
         }
 
@@ -265,19 +272,20 @@ namespace Veauty
             return frag;
         }
 
-        private static GameObject ApplyPatchWidget(GameObject go, Widget oldWidget, Widget newWidget)
+        private static GameObject ApplyPatchAttach(GameObject go, Attach attach)
         {
-            var oldTree = oldWidget.Render();
-            var newTree = newWidget.Render();
+            var old = go.GetComponent(attach.oldComponent) as MonoBehaviour;
+            GameObject.Destroy(old);
+
+            go.AddComponent(attach.newComponent);
             
-            var patches = Diff.Calc(oldTree, newTree);
+            return go;
+        }
 
-            if (patches.Length == 0)
-            {
-                return go;
-            }
-
-            return Patch.Apply(go, oldTree, patches);
+        private static IEnumerator Delay(int num, System.Action func)
+        {
+            yield return new WaitWhile(() => --num > 0);
+            func();
         }
     }
 
@@ -290,7 +298,7 @@ namespace Veauty
         Append,
         Remove,
         Reorder,
-        Widget
+        Attach
     }
     
     public interface IPatch
@@ -481,6 +489,30 @@ namespace Veauty
         public PatchType GetType() => PatchType.Remove;
         public GameObject GetGameObject() => this.gameObject;
         public void SetGameObject(in GameObject go) => this.gameObject = go;
+        public int GetIndex() => this.index;
+    }
+
+    public struct Attach : IPatch
+    {
+        private GameObject gameObject;
+        private readonly int index;
+        public readonly System.Type oldComponent;
+        public readonly System.Type newComponent;
+
+        public Attach(int index, System.Type oldComponent, System.Type newComponent)
+        {
+            this.index = index;
+            this.oldComponent = oldComponent;
+            this.newComponent = newComponent;
+            this.gameObject = null;
+        }
+        
+        public PatchType GetType() => PatchType.Attach;
+
+        public GameObject GetGameObject() => this.gameObject;
+
+        public void SetGameObject(in GameObject go) => this.gameObject = go;
+
         public int GetIndex() => this.index;
     }
 }
