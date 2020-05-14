@@ -19,9 +19,7 @@ namespace Veauty.Patch
             this.gameObject = null;
         }
 
-        public PatchType GetType() => PatchType.Reorder;
         public GameObject GetGameObject() => this.gameObject;
-
         public void SetGameObject(in GameObject go) => this.gameObject = go;   
         public int GetIndex() => this.index;
 

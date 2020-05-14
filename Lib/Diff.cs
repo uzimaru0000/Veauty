@@ -30,7 +30,7 @@ namespace Veauty
             //     return;
             // }
 
-            if (x.GetType() != y.GetType())
+            if (x.GetNodeType() != y.GetNodeType())
             {
                 if (x is Node<MonoBehaviour> _ && y is KeyedNode<MonoBehaviour> keyedNode)
                 {

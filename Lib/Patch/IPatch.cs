@@ -4,21 +4,8 @@ using Veauty.VTree;
 
 namespace Veauty.Patch
 {
-    public enum PatchType
-    {   
-        Redraw,
-        Text,
-        Attrs,
-        RemoveLast,
-        Append,
-        Remove,
-        Reorder,
-        Attach
-    }
-    
     public interface IPatch
     {
-        PatchType GetType();
         GameObject GetGameObject();
         void SetGameObject(in GameObject go);
         int GetIndex();

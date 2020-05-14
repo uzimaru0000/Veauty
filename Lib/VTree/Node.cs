@@ -18,7 +18,8 @@ namespace Veauty.VTree
         public readonly Attributes attrs;
 
         private readonly int descendantsCount;
-        public BaseNode(string tag, IAttribute[] attrs, IVTree[] kids)
+
+        protected BaseNode(string tag, IAttribute[] attrs, IVTree[] kids)
         {
             this.tag = tag;
             this.kids = kids;
@@ -32,7 +33,7 @@ namespace Veauty.VTree
             this.descendantsCount += kids.Length;
         }
 
-        public VTreeType GetType() => VTreeType.Node;
+        public VTreeType GetNodeType() => VTreeType.Node;
         public int GetDescendantsCount() => this.descendantsCount;
         public IVTree[] GetKids() => this.kids;
     }
@@ -77,7 +78,7 @@ namespace Veauty.VTree
             this.descendantsCount += kids.Length;
         }
 
-        public VTreeType GetType() => VTreeType.KeyedNode;
+        public VTreeType GetNodeType() => VTreeType.KeyedNode;
         public int GetDescendantsCount() => this.descendantsCount;
 
         public IVTree[] GetKids() => this.dekeyedKids;

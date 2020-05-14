@@ -5,7 +5,7 @@ namespace Veauty.VTree
 {
     public abstract class Widget : IVTree, IParent
     {
-        public VTreeType GetType() => VTreeType.Widget;
+        public VTreeType GetNodeType() => VTreeType.Widget;
 
         public abstract IVTree[] GetKids();
 

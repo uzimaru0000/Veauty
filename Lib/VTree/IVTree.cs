@@ -9,7 +9,7 @@ namespace Veauty.VTree
 
     public interface IVTree
     {
-        VTreeType GetType();
+        VTreeType GetNodeType();
         int GetDescendantsCount();
     }
 
