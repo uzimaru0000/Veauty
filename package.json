@@ -1,10 +1,10 @@
 {
-  "name": "com.uzimaru0000.veauty",
+  "name": "com.uzimaru.veauty",
   "displayName": "Veauty",
   "version": "0.1.0",
-  "unity": "2018.4",
+  "unity": "2019.1",
   "description": "Implementation of Virtual-Dom for Unity3D",
-  "keywords": ["Framework", "Virtual-Dom", "VDOM", "UI"],
-  "category": "Framework",
+  "keywords": ["Library", "Virtual-Dom", "VDOM"],
+  "category": "Library",
   "dependencies": {}
 }
