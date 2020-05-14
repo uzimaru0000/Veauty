@@ -1,42 +1,16 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
-namespace Veauty 
+namespace Veauty.VTree
 {
-    public enum VTreeType
+    public interface ITypedNode
     {
-        Text,
-        Node,
-        KeyedNode,
-        Widget
+        System.Type GetComponentType();
     }
-
-    public interface IVTree
-    {
-        VTreeType GetType();
-        int GetDescendantsCount();
-    }
-
-    public interface IParent
-    {
-        IVTree[] GetKids();
-    }
-
-    public struct VText : IVTree
-    {
-        public readonly string text;
-        public VText(string text)
-        {
-            this.text = text;
-        }
-
-        public VTreeType GetType() => VTreeType.Text;
-        public int GetDescendantsCount() => 0;
-
-    }
-
-    public struct VNode : IVTree, IParent
+    
+    // Node
+    
+    public class BaseNode : IVTree, IParent
     {
         public readonly string tag;
         public readonly IVTree[] kids;
@@ -44,7 +18,7 @@ namespace Veauty
         public readonly Attributes attrs;
 
         private readonly int descendantsCount;
-        public VNode(string tag, IAttribute[] attrs, IVTree[] kids)
+        public BaseNode(string tag, IAttribute[] attrs, IVTree[] kids)
         {
             this.tag = tag;
             this.kids = kids;
@@ -62,8 +36,22 @@ namespace Veauty
         public int GetDescendantsCount() => this.descendantsCount;
         public IVTree[] GetKids() => this.kids;
     }
+    
+    public class Node<T> : BaseNode, ITypedNode where T : MonoBehaviour
+    {
+        public Node(string tag, IAttribute[] attrs, IVTree[] kids) : base(tag, attrs, kids) { }
 
-    public struct KeyedVNode : IVTree, IParent
+        public Type GetComponentType() => typeof(T);
+    }
+    
+    public class Node : BaseNode
+    {
+        public Node(string tag, IAttribute[] attrs, IVTree[] kids) : base(tag, attrs, kids) { }
+    }
+    
+    // KeyedNode
+
+    public class BaseKeyedNode : IVTree, IParent
     {
         public readonly string tag;
         public readonly (string, IVTree)[] kids;
@@ -71,7 +59,8 @@ namespace Veauty
 
         private readonly int descendantsCount;
         private readonly IVTree[] dekeyedKids;
-        public KeyedVNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids)
+
+        protected BaseKeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids)
         {
             this.tag = tag;
             this.kids = kids;
@@ -93,20 +82,16 @@ namespace Veauty
 
         public IVTree[] GetKids() => this.dekeyedKids;
     }
-
-    public abstract class Widget : IVTree
-    {
-        public Attributes attrs;
-        
-        public VTreeType GetType() => VTreeType.Widget;
-
-        public abstract GameObject Init(GameObject go);
-
-        public abstract IVTree Render();
-
-        public abstract void Destroy(GameObject go);
-        
-        public abstract int GetDescendantsCount();
-    }
     
+    public class KeyedNode<T> : BaseKeyedNode, ITypedNode where T : MonoBehaviour 
+    {
+        public KeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids) { }
+
+        public Type GetComponentType() => typeof(T);
+    }
+
+    public class KeyedNode : BaseKeyedNode
+    {
+        public KeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids) { }
+    }
 }
