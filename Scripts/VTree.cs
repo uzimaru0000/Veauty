@@ -97,14 +97,14 @@ namespace Veauty
     public abstract class Widget : IVTree
     {
         public Attributes attrs;
+        
+        public VTreeType GetType() => VTreeType.Widget;
 
         public abstract GameObject Init(GameObject go);
 
         public abstract IVTree Render();
 
         public abstract void Destroy(GameObject go);
-
-        public VTreeType GetType() => VTreeType.Widget;
         
         public abstract int GetDescendantsCount();
     }

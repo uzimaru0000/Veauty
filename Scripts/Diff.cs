@@ -29,9 +29,9 @@ namespace Veauty
 
             if (x.GetType() != y.GetType())
             {
-                if (x.GetType() == VTreeType.Node && y.GetType() == VTreeType.KeyedNode)
+                if (x is VNode _ && y is KeyedVNode keyedVNode)
                 {
-                    y = Dekey((KeyedVNode)y);
+                    y = Dekey(keyedVNode);
                 }
                 else
                 {
@@ -43,30 +43,28 @@ namespace Veauty
             {
                 switch (y)
                 {
-                    case VText vText:
-                        if (x.GetType() == VTreeType.Text && ((VText)x).text != vText.text)
+                    case VText yText:
+                        if (x is VText xText && xText.text != yText.text)
                         {
-                            PushPatch(ref patches, new Text(index, vText.text));
-                            return;
+                            PushPatch(ref patches, new Text(index, yText.text));
                         }
                         return;
-                    case VNode vNode:
-                        if (x.GetType() == VTreeType.Node)
+                    case VNode yNode:
+                        if (x is VNode xNode)
                         {
-                            DiffNodes((VNode)x, vNode, ref patches, index);
+                            DiffNodes(xNode, yNode, ref patches, index);
                         }
                         return;
-                    case KeyedVNode keyedVNode:
-                        if (x.GetType() == VTreeType.KeyedNode)
+                    case KeyedVNode yKeyedVNode:
+                        if (x is KeyedVNode xKeyedNode)
                         {
-                            DiffKeyedNodes((KeyedVNode)x, keyedVNode, ref patches, index);
+                            DiffKeyedNodes(xKeyedNode, yKeyedVNode, ref patches, index);
                         }
                         return;
-                    case Widget widget:
-                        if (x.GetType() == VTreeType.Widget)
+                    case Widget yWidget:
+                        if (x is Widget xWidget)
                         {
-                            DiffWidget((Widget) x, widget, ref patches, index);
-                            return;
+                            DiffWidget(xWidget, yWidget, ref patches, index);
                         }
                         return;
                     default:
@@ -88,13 +86,7 @@ namespace Veauty
                 return;
             }
 
-            var attrsDiff = DiffAttrs(x.attrs, y.attrs);
-            if ((attrsDiff.attrs.ContainsKey(AttributeType.Event) && attrsDiff.attrs[AttributeType.Event].Count > 0) ||
-                (attrsDiff.attrs.ContainsKey(AttributeType.Props) && attrsDiff.attrs[AttributeType.Props].Count > 0)
-            )
-            {
-                PushPatch(ref patches, new Attrs(index, attrsDiff));
-            }
+            CheckAttributes(x.attrs, y.attrs, ref patches, index);
 
             DiffKids(x, y, ref patches, index);
         }
@@ -111,74 +103,56 @@ namespace Veauty
                 PushPatch(ref patches, new Redraw(index, y));
                 return;
             }
-
-            var attrsDiff = DiffAttrs(x.attrs, y.attrs);
-            if ((attrsDiff.attrs.ContainsKey(AttributeType.Event) && attrsDiff.attrs[AttributeType.Event].Count > 0) ||
-                (attrsDiff.attrs.ContainsKey(AttributeType.Props) && attrsDiff.attrs[AttributeType.Props].Count > 0)
-            )
-            {
-                PushPatch(ref patches, new Attrs(index, attrsDiff));
-            }
+            
+            CheckAttributes(x.attrs, y.attrs, ref patches, index);
 
             DiffKeyedKids(x, y, ref patches, index);
         }
 
-        static Attributes DiffAttrs(Attributes x, Attributes y)
-        {
-            var diff = new Attributes(new IAttribute[0]);
-
-            foreach (var kv in x.attrs)
-            {
-                diff.attrs[kv.Key] = DiffProp(kv.Value, y.attrs.ContainsKey(kv.Key) ? y.attrs[kv.Key] : new Dictionary<string, IAttribute>());
-            }
-
-            foreach (var kv in y.attrs)
-            {
-                if (!x.attrs.ContainsKey(kv.Key))
-                {
-                    diff.attrs[kv.Key] = DiffProp(new Dictionary<string, IAttribute>(), kv.Value);
-                }
-            }
-
-            return diff;
-        }
-
-        static Dictionary<string, IAttribute> DiffProp(
-            Dictionary<string, IAttribute> x,
-            Dictionary<string, IAttribute> y
+        static void CheckAttributes(
+            Attributes x,
+            Attributes y,
+            ref List<IPatch> patches,
+            int index
         )
         {
+            var attrsDiff = DiffAttributes(x, y);
+            if (attrsDiff.Count > 0)
+            {
+                PushPatch(ref patches, new Attrs(index, attrsDiff));
+            }
+        }
+
+        static Dictionary<string, IAttribute> DiffAttributes(
+            Attributes x,
+            Attributes y
+        )
+        {
+            var xAttrs = x.attrs;
+            var yAttrs = y.attrs;
+            
             var diff = new Dictionary<string, IAttribute>();
 
-            foreach (var kv in x)
+            foreach (var kv in xAttrs)
             {
-                if (y.ContainsKey(kv.Key) && kv.Value.GetType() == y[kv.Key].GetType())
+                var key = kv.Key;
+                if (yAttrs.ContainsKey(key) && xAttrs[key].Equals(yAttrs[key]))
                 {
-                    switch (kv.Value.GetType())
-                    {
-                        case AttributeType.Event:
-                            diff[kv.Value.GetKey()] = y[kv.Value.GetKey()];
-                            diff[$"remove_{kv.Value.GetKey()}"] = kv.Value;
-                            continue;
-                        case AttributeType.Props:
-                            if (!kv.Value.Equals(y[kv.Value.GetKey()]))
-                            {
-                                diff[kv.Value.GetKey()] = y[kv.Value.GetKey()];
-                            }
-                            continue;
-                    }
+                    diff[key] = yAttrs[key];
                 }
                 else
                 {
-                    diff[kv.Key] = null;
+                    diff[key] = null;
                 }
             }
 
-            foreach (var kv in y)
+            foreach (var kv in yAttrs)
             {
-                if (!x.ContainsKey(kv.Key))
+                var key = kv.Key;
+                var value = kv.Value;
+                if (!xAttrs.ContainsKey(key))
                 {
-                    diff[kv.Key] = kv.Value;
+                    diff[key] = value;
                 }
             }
 
@@ -432,13 +406,9 @@ namespace Veauty
             }
 
             var attrs = new List<IAttribute>();
-            foreach (var keyValuePair in keyedNode.attrs.attrs)
+            foreach (var kv in keyedNode.attrs.attrs)
             {
-                foreach (var kv in keyValuePair.Value)
-                {
-                    attrs.Add(kv.Value);
-                }
-
+                attrs.Add(kv.Value);
             }
 
             return new VNode(keyedNode.tag, attrs.ToArray(), kids);

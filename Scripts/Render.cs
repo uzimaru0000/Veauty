@@ -19,7 +19,7 @@ namespace Veauty
                 case KeyedVNode vNode:
                     return CreateVNode(vNode);
                 case Widget widget:
-                    return widget.Init(Render(widget.Render()));
+                    return widget.Init(Render(widget.Render())); 
                 default:
                     return null;
             }
@@ -83,19 +83,9 @@ namespace Veauty
         {
             foreach (var attr in attrs.attrs)
             {
-                switch (attr.Key)
-                {
-                    case AttributeType.Event:
-                        // applyEvent(go, attr.Value);
-                        break;
-                    case AttributeType.Props:
-                        // applyAttrs(go, attr.Value);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                attr.Value.Apply(go);
             }
         }
-        
+
     }
 }

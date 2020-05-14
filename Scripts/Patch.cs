@@ -72,13 +72,19 @@ namespace Veauty
 
                 i++;
 
-                index = patch.GetIndex();
-                if (i >= patches.Length || index > high)
+                if (i < patches.Length)
+                {
+                    patch = patches[i];
+                    index = patch.GetIndex();
+                    if (index > high)
+                    {
+                        return i;
+                    }
+                }
+                else
                 {
                     return i;
                 }
-
-                patch = patches[i];
             }
 
             switch (vTree)
@@ -95,7 +101,18 @@ namespace Veauty
                         if (low <= index && index <= nextLow)
                         {
                             i = AddGameObjectNodesHelper(children.GetChild(j).gameObject, kid, ref patches, i, low, nextLow);
-                            if (i >= patches.Length || (index = patch.GetIndex()) > high)
+                            
+                            
+                            if (i < patches.Length)
+                            {
+                                patch = patches[i];
+                                index = patch.GetIndex();
+                                if (index > high)
+                                {
+                                    return i;
+                                }
+                            }
+                            else
                             {
                                 return i;
                             }
@@ -169,15 +186,13 @@ namespace Veauty
                 {
                     if (remove.entry == null && remove.patches == null)
                     {
-                        // go.transform.SetParent(null);
-                        GameObject.Destroy(go);
+                        go.transform.SetParent(null);
                         return go;
                     }
 
                     if (remove.entry.index != -1)
                     {
-                        // go.transform.SetParent(null); 
-                        GameObject.Destroy(go);
+                        go.transform.SetParent(null);
                     }
 
                     ((Remove) patch).entry.data = Helper(go, remove.patches);
@@ -187,10 +202,6 @@ namespace Veauty
                 {
                     return ApplyPatchReorder(go, reorder);
                 }
-                // case WidgetPatch widget:
-                // {
-                //     return ApplyPatchWidget(go, widget.oldWidget, widget.newWidget);
-                // }
             }
             return go;
         }
@@ -201,9 +212,13 @@ namespace Veauty
             return newNode;
         }
 
-        private static GameObject ApplyAttrs(GameObject go, Attributes attrs)
+        private static GameObject ApplyAttrs(GameObject go, Dictionary<string, IAttribute> attrs)
         {
-            // TODO: I don't have implements idea; 
+            foreach (var attr in attrs)
+            {
+                attr.Value.Apply(go);
+            }
+            
             return go;
         }
 
@@ -354,9 +369,9 @@ namespace Veauty
         public int index;
         public GameObject gameObject;
 
-        public Attributes attrs;
+        public Dictionary<string, IAttribute> attrs;
 
-        public Attrs(int index, Attributes attrs)
+        public Attrs(int index, Dictionary<string, IAttribute> attrs)
         {
             this.index = index;
             this.attrs = attrs;
