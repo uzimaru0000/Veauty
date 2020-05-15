@@ -38,7 +38,7 @@ namespace Veauty.VTree
         public IVTree[] GetKids() => this.kids;
     }
     
-    public class Node<T> : BaseNode, ITypedNode where T : MonoBehaviour
+    public class Node<T> : BaseNode, ITypedNode where T : Component 
     {
         public Node(string tag, IAttribute[] attrs, IVTree[] kids) : base(tag, attrs, kids) { }
 
@@ -84,7 +84,7 @@ namespace Veauty.VTree
         public IVTree[] GetKids() => this.dekeyedKids;
     }
     
-    public class KeyedNode<T> : BaseKeyedNode, ITypedNode where T : MonoBehaviour 
+    public class KeyedNode<T> : BaseKeyedNode, ITypedNode where T : Component
     {
         public KeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids) { }
 
