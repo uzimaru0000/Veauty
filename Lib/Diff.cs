@@ -32,9 +32,17 @@ namespace Veauty
 
             if (x.GetNodeType() != y.GetNodeType())
             {
-                if (x is Node<MonoBehaviour> _ && y is KeyedNode<MonoBehaviour> keyedNode)
+                if (x is BaseNode && y is BaseKeyedNode)
                 {
-                    y = Dekey(keyedNode);
+                    switch (y)
+                    {
+                        case KeyedNode<Component> typedNode:
+                            y = Dekey(typedNode);
+                            break;
+                        case KeyedNode keyedNode:
+                            y = Dekey(keyedNode);
+                            break;
+                    }
                 }
                 else
                 {
@@ -42,34 +50,32 @@ namespace Veauty
                     return;
                 }
             }
-            else
+            
+            switch (y)
             {
-                switch (y)
-                {
-                    case BaseNode yNode:
-                        if (x is BaseNode xNode)
-                        {
-                            DiffNodes(xNode, yNode, ref patches, index);
-                        }
+                case BaseNode yNode:
+                    if (x is BaseNode xNode)
+                    {
+                        DiffNodes(xNode, yNode, ref patches, index);
+                    }
 
-                        return;
-                    case BaseKeyedNode yKeyedVNode:
-                        if (x is BaseKeyedNode xKeyedNode)
-                        {
-                            DiffKeyedNodes(xKeyedNode, yKeyedVNode, ref patches, index);
-                        }
+                    return;
+                case BaseKeyedNode yKeyedVNode:
+                    if (x is BaseKeyedNode xKeyedNode)
+                    {
+                        DiffKeyedNodes(xKeyedNode, yKeyedVNode, ref patches, index);
+                    }
 
-                        return;
-                    case Widget yWidget:
-                        if (x is Widget xWidget)
-                        {
-                            DiffWidget(xWidget, yWidget, ref patches, index);
-                        }
+                    return;
+                case Widget yWidget:
+                    if (x is Widget xWidget)
+                    {
+                        DiffWidget(xWidget, yWidget, ref patches, index);
+                    }
 
-                        return;
-                    default:
-                        throw new Exception("Invalid VTree type");
-                }
+                    return;
+                default:
+                    throw new Exception("Invalid VTree type");
             }
         }
 
@@ -419,7 +425,7 @@ namespace Veauty
             Helper(oldTree, newTree, ref patches, index);
         }
 
-        static Node<T> Dekey<T>(KeyedNode<T> keyedNode) where T : MonoBehaviour
+        static Node Dekey(KeyedNode keyedNode)
         {
             var kids = new IVTree[keyedNode.kids.Length];
             for (var i = 0; i < keyedNode.kids.Length; i++)
@@ -433,7 +439,24 @@ namespace Veauty
                 attrs.Add(kv.Value);
             }
 
-            return new Node<T>(keyedNode.tag, attrs.ToArray(), kids);
+            return new Node(keyedNode.tag, attrs.ToArray(), kids);
+        }
+
+        static Node<T> Dekey<T>(KeyedNode<T> typedNode) where T : Component
+        {
+            var kids = new IVTree[typedNode.kids.Length];
+            for (var i = 0; i < typedNode.kids.Length; i++)
+            {
+                kids[i] = typedNode.kids[i].Item2;
+            }
+
+            var attrs = new List<IAttribute>();
+            foreach (var kv in typedNode.attrs.attrs)
+            {
+                attrs.Add(kv.Value);
+            }
+
+            return new Node<T>(typedNode.tag, attrs.ToArray(), kids);
         }
     }
 }
