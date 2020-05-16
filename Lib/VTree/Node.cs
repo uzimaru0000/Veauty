@@ -7,23 +7,33 @@ namespace Veauty.VTree
     {
         System.Type GetComponentType();
     }
-    
-    // Node
-    
-    public class BaseNode : IVTree, IParent
+
+    public abstract class NodeBase : IVTree, IParent
     {
         public readonly string tag;
-        public readonly IVTree[] kids;
-
         public readonly Attributes attrs;
 
-        private readonly int descendantsCount;
-
-        protected BaseNode(string tag, IAttribute[] attrs, IVTree[] kids)
+        protected NodeBase(string tag, IAttribute[] attrs)
         {
             this.tag = tag;
-            this.kids = kids;
             this.attrs = new Attributes(attrs);
+        }
+
+        public VTreeType GetNodeType() => VTreeType.Node;
+        public abstract int GetDescendantsCount();
+        public abstract IVTree[] GetKids();
+    }
+
+    // Node
+
+    public class BaseNode : NodeBase 
+    {
+        public readonly IVTree[] kids;
+        private readonly int descendantsCount;
+
+        protected BaseNode(string tag, IAttribute[] attrs, IVTree[] kids): base(tag, attrs)
+        {
+            this.kids = kids;
             this.descendantsCount = 0;
 
             foreach (var kid in kids)
@@ -33,9 +43,8 @@ namespace Veauty.VTree
             this.descendantsCount += kids.Length;
         }
 
-        public VTreeType GetNodeType() => VTreeType.Node;
-        public int GetDescendantsCount() => this.descendantsCount;
-        public IVTree[] GetKids() => this.kids;
+        public override int GetDescendantsCount() => this.descendantsCount;
+        public override IVTree[] GetKids() => this.kids;
     }
     
     public class Node<T> : BaseNode, ITypedNode where T : Component 
@@ -52,20 +61,15 @@ namespace Veauty.VTree
     
     // KeyedNode
 
-    public class BaseKeyedNode : IVTree, IParent
+    public class BaseKeyedNode : NodeBase 
     {
-        public readonly string tag;
         public readonly (string, IVTree)[] kids;
-        public readonly Attributes attrs;
-
         private readonly int descendantsCount;
         private readonly IVTree[] dekeyedKids;
 
-        protected BaseKeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids)
+        protected BaseKeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs)
         {
-            this.tag = tag;
             this.kids = kids;
-            this.attrs = new Attributes(attrs);
             this.descendantsCount = 0;
             this.dekeyedKids = new IVTree[kids.Length];
 
@@ -78,10 +82,9 @@ namespace Veauty.VTree
             this.descendantsCount += kids.Length;
         }
 
-        public VTreeType GetNodeType() => VTreeType.KeyedNode;
-        public int GetDescendantsCount() => this.descendantsCount;
+        public override int GetDescendantsCount() => this.descendantsCount;
 
-        public IVTree[] GetKids() => this.dekeyedKids;
+        public override IVTree[] GetKids() => this.dekeyedKids;
     }
     
     public class KeyedNode<T> : BaseKeyedNode, ITypedNode where T : Component
