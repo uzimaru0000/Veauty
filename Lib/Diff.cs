@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Veauty.Patch;
 using Veauty.VTree;
+using Object = System.Object;
 
 namespace Veauty
 {
@@ -425,38 +426,29 @@ namespace Veauty
             Helper(oldTree, newTree, ref patches, index);
         }
 
-        static Node Dekey(KeyedNode keyedNode)
+        static BaseNode Dekey(BaseKeyedNode keyedNode)
         {
             var kids = new IVTree[keyedNode.kids.Length];
-            for (var i = 0; i < keyedNode.kids.Length; i++)
+            for (var i = 0; i < kids.Length; i++)
             {
-                kids[i] = keyedNode.kids[i].Item2;
+                kids[i] = keyedNode.GetKids()[i];
             }
-
+            
             var attrs = new List<IAttribute>();
             foreach (var kv in keyedNode.attrs.attrs)
             {
                 attrs.Add(kv.Value);
             }
 
-            return new Node(keyedNode.tag, attrs.ToArray(), kids);
-        }
-
-        static Node<T> Dekey<T>(KeyedNode<T> typedNode) where T : Component
-        {
-            var kids = new IVTree[typedNode.kids.Length];
-            for (var i = 0; i < typedNode.kids.Length; i++)
+            if (keyedNode is ITypedNode typedNode)
             {
-                kids[i] = typedNode.kids[i].Item2;
+                var genericNodeType = typeof(Node<>).MakeGenericType(typedNode.GetComponentType());
+                return (BaseNode) System.Activator.CreateInstance(genericNodeType, new object[] {keyedNode.tag, attrs.ToArray(), kids});
             }
-
-            var attrs = new List<IAttribute>();
-            foreach (var kv in typedNode.attrs.attrs)
+            else
             {
-                attrs.Add(kv.Value);
+                return new Node(keyedNode.tag, attrs.ToArray(), kids);
             }
-
-            return new Node<T>(typedNode.tag, attrs.ToArray(), kids);
         }
     }
 }
