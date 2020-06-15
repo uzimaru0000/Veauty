@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Veauty.VTree;
 
-namespace Veauty.Patch
+namespace Veauty
 {
     public interface IPatch
     {

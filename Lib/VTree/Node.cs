@@ -47,11 +47,16 @@ namespace Veauty.VTree
         public override IVTree[] GetKids() => this.kids;
     }
     
-    public class Node<T> : BaseNode, ITypedNode where T : Component 
+    public class Node<T> : BaseNode, ITypedNode where T : Component
     {
-        public Node(string tag, IAttribute[] attrs, IVTree[] kids) : base(tag, attrs, kids) { }
+        private System.Type componentType;
 
-        public Type GetComponentType() => typeof(T);
+        public Node(string tag, IAttribute[] attrs, IVTree[] kids) : base(tag, attrs, kids)
+        {
+            componentType = typeof(T);
+        }
+
+        public Type GetComponentType() => componentType;
     }
     
     public class Node : BaseNode
@@ -89,9 +94,14 @@ namespace Veauty.VTree
     
     public class KeyedNode<T> : BaseKeyedNode, ITypedNode where T : Component
     {
-        public KeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids) { }
+        private System.Type componentType;
 
-        public Type GetComponentType() => typeof(T);
+        public KeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids)
+        {
+            componentType = typeof(T);
+        }
+
+        public Type GetComponentType() => componentType;
     }
 
     public class KeyedNode : BaseKeyedNode

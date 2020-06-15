@@ -1,4 +1,4 @@
-namespace Veauty.VTree
+namespace Veauty
 {
     public enum VTreeType
     {
