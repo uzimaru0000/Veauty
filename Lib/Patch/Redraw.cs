@@ -1,23 +1,20 @@
-using UnityEngine;
-using Veauty.VTree;
-
 namespace Veauty.Patch
 {
-    public class Redraw : IPatch
+    public class Redraw<T> : IPatch<T>
     {
         public int index;
         public IVTree vTree;
-        public GameObject gameObject;
+        public T target;
 
         public Redraw(int index, IVTree vTree)
         {
             this.index = index;
             this.vTree = vTree;
-            this.gameObject = null;
+            this.target = default(T);
         }
 
-        public GameObject GetGameObject() => this.gameObject;
-        public void SetGameObject(in GameObject go) => this.gameObject = go;
+        public T GetTarget() => this.target;
+        public void SetTarget(in T target) => this.target = target;
 
         public int GetIndex() => this.index;
 

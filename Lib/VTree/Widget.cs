@@ -1,19 +1,18 @@
 using System.Linq;
-using UnityEngine;
 
 namespace Veauty.VTree
 {
-    public abstract class Widget : IVTree, IParent
+    public abstract class Widget<T> : IVTree, IParent
     {
         public VTreeType GetNodeType() => VTreeType.Widget;
 
         public abstract IVTree[] GetKids();
 
-        public abstract GameObject Init(GameObject go);
+        public abstract T Init(T obj);
 
         public abstract IVTree Render();
 
-        public abstract void Destroy(GameObject go);
+        public abstract void Destroy(T obj);
 
         public int GetDescendantsCount() => this.GetKids().Sum(x => x.GetDescendantsCount()) + this.GetKids().Length;
     }

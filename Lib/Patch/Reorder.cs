@@ -1,26 +1,24 @@
-using UnityEngine;
-
 namespace Veauty.Patch
 {
-    public class Reorder : IPatch
+    public class Reorder<T> : IPatch<T>
     {
         private int index;
-        private GameObject gameObject;
-        public readonly IPatch[] patches;
+        private T target;
+        public readonly IPatch<T>[] patches;
         public readonly Insert[] inserts;
         public readonly Insert[] endInserts;
 
-        public Reorder(int index, IPatch[] patches, Insert[] inserts, Insert[] endInserts)
+        public Reorder(int index, IPatch<T>[] patches, Insert[] inserts, Insert[] endInserts)
         {
             this.index = index;
             this.patches = patches;
             this.inserts = inserts;
             this.endInserts = endInserts;
-            this.gameObject = null;
+            this.target = default(T);
         }
 
-        public GameObject GetGameObject() => this.gameObject;
-        public void SetGameObject(in GameObject go) => this.gameObject = go;   
+        public T GetTarget() => this.target;
+        public void SetTarget(in T target) => this.target = target; 
         public int GetIndex() => this.index;
 
         public struct Insert

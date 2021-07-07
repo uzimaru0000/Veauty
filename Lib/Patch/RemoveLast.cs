@@ -1,11 +1,9 @@
-using UnityEngine;
-
 namespace Veauty.Patch
 {
-    public class RemoveLast : IPatch
+    public class RemoveLast<T> : IPatch<T>
     {
         private int index;
-        private GameObject gameObject;
+        private T target;
 
         public readonly int length;
         public readonly int diff;
@@ -15,11 +13,11 @@ namespace Veauty.Patch
             this.index = index;
             this.length = length;
             this.diff = diff;
-            this.gameObject = null;
+            this.target = default(T);
         }
 
-        public GameObject GetGameObject() => this.gameObject;
-        public void SetGameObject(in GameObject go) => this.gameObject = go;
+        public T GetTarget() => this.target;
+        public void SetTarget(in T target) => this.target = target;
         public int GetIndex() => this.index;
     }
 }

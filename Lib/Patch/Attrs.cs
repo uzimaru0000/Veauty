@@ -1,25 +1,24 @@
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Veauty.Patch 
 {
-    public class Attrs : IPatch
+    public class Attrs<T> : IPatch<T>
     {
 
         public int index;
-        public GameObject gameObject;
+        public T target;
 
-        public Dictionary<string, IAttribute> attrs;
+        public Dictionary<string, IAttribute<T>> attrs;
 
-        public Attrs(int index, Dictionary<string, IAttribute> attrs)
+        public Attrs(int index, Dictionary<string, IAttribute<T>> attrs)
         {
             this.index = index;
             this.attrs = attrs;
-            this.gameObject = null;
+            this.target = default(T);
         }
 
-        public GameObject GetGameObject() => this.gameObject;
-        public void SetGameObject(in GameObject go) => this.gameObject = go;
+        public T GetTarget() => this.target;
+        public void SetTarget(in T target) => this.target = target;
         public int GetIndex() => this.index;
     }
 }

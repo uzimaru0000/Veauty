@@ -4,7 +4,7 @@ Implementation of Virtual-Dom for Unity3D
 
 ## Environment
 
-- Unity3D 2019.1 or higher
+- Unity3D 2020.3 or higher
 - C# 7.0
 
 ## Install

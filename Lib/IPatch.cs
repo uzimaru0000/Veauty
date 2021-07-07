@@ -1,13 +1,9 @@
-using System.Collections.Generic;
-using UnityEngine;
-using Veauty.VTree;
-
 namespace Veauty
 {
-    public interface IPatch
+    public interface IPatch<T>
     {
-        GameObject GetGameObject();
-        void SetGameObject(in GameObject go);
+        T GetTarget();
+        void SetTarget(in T target);
         int GetIndex();
     }
 

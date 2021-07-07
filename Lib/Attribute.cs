@@ -1,14 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
 namespace Veauty
 {
-    public class Attributes
+    public class Attributes<T>
     {
-        public Dictionary<string, IAttribute> attrs = new Dictionary<string, IAttribute>();
+        public Dictionary<string, IAttribute<T>> attrs = new Dictionary<string, IAttribute<T>>();
 
-        public Attributes(IEnumerable<IAttribute> attrs)
+        public Attributes(IEnumerable<IAttribute<T>> attrs)
         {
             foreach (var attr in attrs)
             {
@@ -24,18 +22,18 @@ namespace Veauty
         }
     }
 
-    public interface IAttribute
+    public interface IAttribute<T>
     {
         string GetKey();
-        void Apply(GameObject obj);
+        void Apply(T obj);
     }
     
-    public abstract class Attribute<T> : IAttribute
+    public abstract class Attribute<T, U> : IAttribute<T>
     {
         private readonly string key;
-        private readonly T value;
+        private readonly U value;
 
-        protected Attribute(string key, T value)
+        protected Attribute(string key, U value)
         {
             this.key = key;
             this.value = value;
@@ -43,13 +41,13 @@ namespace Veauty
 
         public string GetKey() => this.key;
 
-        protected T GetValue() => this.value;
+        protected U GetValue() => this.value;
 
-        public abstract void Apply(GameObject obj);
+        public abstract void Apply(T obj);
 
         public override bool Equals(object obj)
         {
-            if (obj is Attribute<T> other)
+            if (obj is Attribute<T, U> other)
             {
                 return Equals(other);
             }
@@ -57,7 +55,7 @@ namespace Veauty
             return false;
         }
 
-        private bool Equals(Attribute<T> other)
+        private bool Equals(Attribute<T, U> other)
         {
             return key == other.key && value.Equals(other.value);
         }
