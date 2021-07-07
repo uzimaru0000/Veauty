@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 namespace Veauty.VTree
 {
@@ -8,15 +7,15 @@ namespace Veauty.VTree
         System.Type GetComponentType();
     }
 
-    public abstract class NodeBase : IVTree, IParent
+    public abstract class NodeBase<T> : IVTree, IParent
     {
         public readonly string tag;
-        public readonly Attributes attrs;
+        public readonly Attributes<T> attrs;
 
-        protected NodeBase(string tag, IAttribute[] attrs)
+        protected NodeBase(string tag, IAttribute<T>[] attrs)
         {
             this.tag = tag;
-            this.attrs = new Attributes(attrs);
+            this.attrs = new Attributes<T>(attrs);
         }
 
         public VTreeType GetNodeType() => VTreeType.Node;
@@ -26,12 +25,12 @@ namespace Veauty.VTree
 
     // Node
 
-    public class BaseNode : NodeBase 
+    public class BaseNode<T> : NodeBase<T>
     {
         public readonly IVTree[] kids;
         private readonly int descendantsCount;
 
-        protected BaseNode(string tag, IAttribute[] attrs, IVTree[] kids): base(tag, attrs)
+        protected BaseNode(string tag, IAttribute<T>[] attrs, IVTree[] kids): base(tag, attrs)
         {
             this.kids = kids;
             this.descendantsCount = 0;
@@ -47,11 +46,11 @@ namespace Veauty.VTree
         public override IVTree[] GetKids() => this.kids;
     }
     
-    public class Node<T> : BaseNode, ITypedNode where T : Component
+    public class Node<T, U> : BaseNode<U>, ITypedNode
     {
         private System.Type componentType;
 
-        public Node(string tag, IAttribute[] attrs, IVTree[] kids) : base(tag, attrs, kids)
+        public Node(string tag, IAttribute<U>[] attrs, IVTree[] kids) : base(tag, attrs, kids)
         {
             componentType = typeof(T);
         }
@@ -59,20 +58,20 @@ namespace Veauty.VTree
         public Type GetComponentType() => componentType;
     }
     
-    public class Node : BaseNode
+    public class Node<T> : BaseNode<T>
     {
-        public Node(string tag, IAttribute[] attrs, IVTree[] kids) : base(tag, attrs, kids) { }
+        public Node(string tag, IAttribute<T>[] attrs, IVTree[] kids) : base(tag, attrs, kids) { }
     }
     
     // KeyedNode
 
-    public class BaseKeyedNode : NodeBase 
+    public class BaseKeyedNode<T> : NodeBase<T>
     {
         public readonly (string, IVTree)[] kids;
         private readonly int descendantsCount;
         private readonly IVTree[] dekeyedKids;
 
-        protected BaseKeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs)
+        protected BaseKeyedNode(string tag, IAttribute<T>[] attrs, (string, IVTree)[] kids) : base(tag, attrs)
         {
             this.kids = kids;
             this.descendantsCount = 0;
@@ -92,11 +91,11 @@ namespace Veauty.VTree
         public override IVTree[] GetKids() => this.dekeyedKids;
     }
     
-    public class KeyedNode<T> : BaseKeyedNode, ITypedNode where T : Component
+    public class KeyedNode<T, U> : BaseKeyedNode<U>, ITypedNode
     {
         private System.Type componentType;
 
-        public KeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids)
+        public KeyedNode(string tag, IAttribute<U>[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids)
         {
             componentType = typeof(T);
         }
@@ -104,8 +103,8 @@ namespace Veauty.VTree
         public Type GetComponentType() => componentType;
     }
 
-    public class KeyedNode : BaseKeyedNode
+    public class KeyedNode<T> : BaseKeyedNode<T>
     {
-        public KeyedNode(string tag, IAttribute[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids) { }
+        public KeyedNode(string tag, IAttribute<T>[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids) { }
     }
 }

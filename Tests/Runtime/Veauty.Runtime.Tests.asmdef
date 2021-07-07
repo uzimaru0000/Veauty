@@ -1,8 +1,10 @@
 {
     "name": "Veauty.Runtime.Tests",
+    "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Veauty"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
