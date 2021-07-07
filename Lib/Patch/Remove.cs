@@ -1,26 +1,24 @@
-using UnityEngine;
-
 namespace Veauty.Patch
 {
-    public class Remove : IPatch
+    public class Remove<T> : IPatch<T>
     {
         private readonly int index;
-        private GameObject gameObject;
+        private T target;
 
-        public readonly IPatch[] patches;
+        public readonly IPatch<T>[] patches;
 
         public readonly Entry entry;
 
-        public Remove(int index, IPatch[] patches = null, Entry entry = null)
+        public Remove(int index, IPatch<T>[] patches = null, Entry entry = null)
         {
             this.index = index;
             this.patches = patches;
             this.entry = entry;
-            this.gameObject = null;
+            this.target = default(T);
         }
 
-        public GameObject GetGameObject() => this.gameObject;
-        public void SetGameObject(in GameObject go) => this.gameObject = go;
+        public T GetTarget() => this.target;
+        public void SetTarget(in T target) => this.target = target;
         public int GetIndex() => this.index;
     }
 }

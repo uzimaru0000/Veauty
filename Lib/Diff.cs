@@ -1,29 +1,26 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using Veauty.Patch;
 using Veauty.VTree;
-using Object = System.Object;
 
 namespace Veauty
 {
-    public static class Diff
+    public static class Diff<T>
     {
-        public static IPatch[] Calc(IVTree x, IVTree y)
+        public static IPatch<T>[] Calc(IVTree x, IVTree y)
         {
-            var patches = new List<IPatch>();
+            var patches = new List<IPatch<T>>();
             Helper(x, y, ref patches, 0);
             return patches.ToArray();
         }
 
-        static IPatch PushPatch(ref List<IPatch> patches, IPatch patch)
+        static IPatch<T> PushPatch(ref List<IPatch<T>> patches, IPatch<T> patch)
         {
             patches.Add(patch);
             return patch;
         }
 
-        static void Helper(IVTree x, IVTree y, ref List<IPatch> patches, int index)
+        static void Helper(IVTree x, IVTree y, ref List<IPatch<T>> patches, int index)
         {
             // TODO: Implement `Equals` method on each node
             // if (x.Equals(y))
@@ -33,43 +30,35 @@ namespace Veauty
 
             if (x.GetNodeType() != y.GetNodeType())
             {
-                if (x is BaseNode && y is BaseKeyedNode)
+                if (x is BaseNode<T> && y is BaseKeyedNode<T> keyedNode)
                 {
-                    switch (y)
-                    {
-                        case KeyedNode<Component> typedNode:
-                            y = Dekey(typedNode);
-                            break;
-                        case KeyedNode keyedNode:
-                            y = Dekey(keyedNode);
-                            break;
-                    }
+                    y = Dekey(keyedNode);
                 }
                 else
                 {
-                    PushPatch(ref patches, new Redraw(index, y));
+                    PushPatch(ref patches, new Redraw<T>(index, y));
                     return;
                 }
             }
             
             switch (y)
             {
-                case BaseNode yNode:
-                    if (x is BaseNode xNode)
+                case BaseNode<T> yNode:
+                    if (x is BaseNode<T> xNode)
                     {
                         DiffNodes(xNode, yNode, ref patches, index);
                     }
 
                     return;
-                case BaseKeyedNode yKeyedVNode:
-                    if (x is BaseKeyedNode xKeyedNode)
+                case BaseKeyedNode<T> yKeyedVNode:
+                    if (x is BaseKeyedNode<T> xKeyedNode)
                     {
                         DiffKeyedNodes(xKeyedNode, yKeyedVNode, ref patches, index);
                     }
 
                     return;
-                case Widget yWidget:
-                    if (x is Widget xWidget)
+                case Widget<T> yWidget:
+                    if (x is Widget<T> xWidget)
                     {
                         DiffWidget(xWidget, yWidget, ref patches, index);
                     }
@@ -81,9 +70,9 @@ namespace Veauty
         }
 
         static void DiffNodes(
-            BaseNode x,
-            BaseNode y,
-            ref List<IPatch> patches,
+            BaseNode<T> x,
+            BaseNode<T> y,
+            ref List<IPatch<T>> patches,
             int index
         )
         {
@@ -92,7 +81,7 @@ namespace Veauty
             // Not TypedNode and not Equal tag name
             if (attach == null && x.tag != y.tag)
             {
-                PushPatch(ref patches, new Redraw(index, y));
+                PushPatch(ref patches, new Redraw<T>(index, y));
                 return;
             }
 
@@ -108,15 +97,15 @@ namespace Veauty
         }
 
         static void DiffKeyedNodes(
-            BaseKeyedNode x,
-            BaseKeyedNode y,
-            ref List<IPatch> patches,
+            BaseKeyedNode<T> x,
+            BaseKeyedNode<T> y,
+            ref List<IPatch<T>> patches,
             int index
         )
         {
             if (x.tag != y.tag)
             {
-                PushPatch(ref patches, new Redraw(index, y));
+                PushPatch(ref patches, new Redraw<T>(index, y));
                 return;
             }
 
@@ -125,39 +114,39 @@ namespace Veauty
             DiffKeyedKids(x, y, ref patches, index);
         }
 
-        static IPatch CheckComponentType(IVTree x, IVTree y, int index)
+        static IPatch<T> CheckComponentType(IVTree x, IVTree y, int index)
         {
             if (x is ITypedNode xNode && y is ITypedNode yNode && xNode.GetComponentType() != yNode.GetComponentType())
             {
-                return new Attach(index, xNode.GetComponentType(), yNode.GetComponentType());
+                return new Attach<T>(index, xNode.GetComponentType(), yNode.GetComponentType());
             }
 
             return null;
         }
 
         static void CheckAttributes(
-            Attributes x,
-            Attributes y,
-            ref List<IPatch> patches,
+            Attributes<T> x,
+            Attributes<T> y,
+            ref List<IPatch<T>> patches,
             int index
         )
         {
             var attrsDiff = DiffAttributes(x, y);
             if (attrsDiff.Count > 0)
             {
-                PushPatch(ref patches, new Attrs(index, attrsDiff));
+                PushPatch(ref patches, new Attrs<T>(index, attrsDiff));
             }
         }
 
-        static Dictionary<string, IAttribute> DiffAttributes(
-            Attributes x,
-            Attributes y
+        static Dictionary<string, IAttribute<T>> DiffAttributes(
+            Attributes<T> x,
+            Attributes<T> y
         )
         {
             var xAttrs = x.attrs;
             var yAttrs = y.attrs;
 
-            var diff = new Dictionary<string, IAttribute>();
+            var diff = new Dictionary<string, IAttribute<T>>();
 
             foreach (var kv in xAttrs)
             {
@@ -188,7 +177,7 @@ namespace Veauty
             return diff;
         }
 
-        static void DiffKids(BaseNode xParent, BaseNode yParent, ref List<IPatch> patches, int index)
+        static void DiffKids(BaseNode<T> xParent, BaseNode<T> yParent, ref List<IPatch<T>> patches, int index)
         {
             var xKids = xParent.kids;
             var yKids = yParent.kids;
@@ -198,11 +187,11 @@ namespace Veauty
 
             if (xLen > yLen)
             {
-                PushPatch(ref patches, new RemoveLast(index, yLen, xLen - yLen));
+                PushPatch(ref patches, new RemoveLast<T>(index, yLen, xLen - yLen));
             }
             else if (xLen < yLen)
             {
-                PushPatch(ref patches, new Append(index, xLen, yKids));
+                PushPatch(ref patches, new Append<T>(index, xLen, yKids));
             }
 
             var minLen = xLen < yLen ? xLen : yLen;
@@ -215,12 +204,12 @@ namespace Veauty
             }
         }
 
-        static void DiffKeyedKids(BaseKeyedNode xParent, BaseKeyedNode yParent, ref List<IPatch> patches, int rootIndex)
+        static void DiffKeyedKids(BaseKeyedNode<T> xParent, BaseKeyedNode<T> yParent, ref List<IPatch<T>> patches, int rootIndex)
         {
-            var localPatches = new List<IPatch>();
+            var localPatches = new List<IPatch<T>>();
 
             var changes = new Dictionary<string, Entry>();
-            var inserts = new List<Reorder.Insert>();
+            var inserts = new List<Reorder<T>.Insert>();
 
             var xKids = xParent.kids;
             var yKids = yParent.kids;
@@ -328,7 +317,7 @@ namespace Veauty
                 xIndex++;
             }
 
-            var endInserts = new List<Reorder.Insert>();
+            var endInserts = new List<Reorder<T>.Insert>();
             while (yIndex < yLen)
             {
                 var (yKey, yNode) = yKids[yIndex];
@@ -340,24 +329,24 @@ namespace Veauty
             {
                 PushPatch(
                     ref patches,
-                    new Reorder(rootIndex, localPatches.ToArray(), inserts.ToArray(), endInserts.ToArray())
+                    new Reorder<T>(rootIndex, localPatches.ToArray(), inserts.ToArray(), endInserts.ToArray())
                 );
             }
         }
 
         static void InsertNode(
             ref Dictionary<string, Entry> changes,
-            ref List<IPatch> localPatches,
+            ref List<IPatch<T>> localPatches,
             string key,
             IVTree vTree,
             int yIndex,
-            ref List<Reorder.Insert> inserts
+            ref List<Reorder<T>.Insert> inserts
         )
         {
             if (!changes.ContainsKey(key))
             {
                 var newEntry = new Entry(Entry.Type.Insert, vTree, yIndex);
-                inserts.Add(new Reorder.Insert {index = yIndex, entry = newEntry});
+                inserts.Add(new Reorder<T>.Insert {index = yIndex, entry = newEntry});
                 changes[key] = newEntry;
 
                 return;
@@ -367,10 +356,10 @@ namespace Veauty
 
             if (entry.tag == Entry.Type.Remove)
             {
-                inserts.Add(new Reorder.Insert {index = yIndex, entry = entry});
+                inserts.Add(new Reorder<T>.Insert {index = yIndex, entry = entry});
 
                 entry.tag = Entry.Type.Move;
-                var subPatches = new List<IPatch>();
+                var subPatches = new List<IPatch<T>>();
                 Helper(entry.vTree, vTree, ref subPatches, entry.index);
                 entry.index = yIndex;
                 entry.data = new
@@ -387,7 +376,7 @@ namespace Veauty
 
         static void RemoveNode(
             ref Dictionary<string, Entry> changes,
-            ref List<IPatch> localPatches,
+            ref List<IPatch<T>> localPatches,
             string key,
             IVTree vTree,
             int index
@@ -395,7 +384,7 @@ namespace Veauty
         {
             if (!changes.ContainsKey(key))
             {
-                var patch = PushPatch(ref localPatches, new Remove(index));
+                var patch = PushPatch(ref localPatches, new Remove<T>(index));
 
                 changes[key] = new Entry(Entry.Type.Remove, vTree, index);
                 changes[key].data = patch;
@@ -408,17 +397,17 @@ namespace Veauty
             if (entry.tag == Entry.Type.Insert)
             {
                 entry.tag = Entry.Type.Remove;
-                var subPatches = new List<IPatch>();
+                var subPatches = new List<IPatch<T>>();
                 Helper(vTree, entry.vTree, ref subPatches, index);
 
-                PushPatch(ref localPatches, new Remove(index, subPatches.ToArray(), entry));
+                PushPatch(ref localPatches, new Remove<T>(index, subPatches.ToArray(), entry));
                 return;
             }
 
             RemoveNode(ref changes, ref localPatches, key + "UniVDOM", vTree, index);
         }
 
-        static void DiffWidget(Widget x, Widget y, ref List<IPatch> patches, int index)
+        static void DiffWidget(Widget<T> x, Widget<T> y, ref List<IPatch<T>> patches, int index)
         {
             var oldTree = x.Render();
             var newTree = y.Render();
@@ -426,7 +415,7 @@ namespace Veauty
             Helper(oldTree, newTree, ref patches, index);
         }
 
-        static BaseNode Dekey(BaseKeyedNode keyedNode)
+        static BaseNode<T> Dekey(BaseKeyedNode<T> keyedNode)
         {
             var kids = new IVTree[keyedNode.kids.Length];
             for (var i = 0; i < kids.Length; i++)
@@ -434,7 +423,7 @@ namespace Veauty
                 kids[i] = keyedNode.GetKids()[i];
             }
             
-            var attrs = new List<IAttribute>();
+            var attrs = new List<IAttribute<T>>();
             foreach (var kv in keyedNode.attrs.attrs)
             {
                 attrs.Add(kv.Value);
@@ -443,11 +432,11 @@ namespace Veauty
             if (keyedNode is ITypedNode typedNode)
             {
                 var genericNodeType = typeof(Node<>).MakeGenericType(typedNode.GetComponentType());
-                return (BaseNode) System.Activator.CreateInstance(genericNodeType, new object[] {keyedNode.tag, attrs.ToArray(), kids});
+                return (BaseNode<T>) System.Activator.CreateInstance(genericNodeType, new object[] {keyedNode.tag, attrs.ToArray(), kids});
             }
             else
             {
-                return new Node(keyedNode.tag, attrs.ToArray(), kids);
+                return new Node<T>(keyedNode.tag, attrs.ToArray(), kids);
             }
         }
     }

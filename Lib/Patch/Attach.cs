@@ -1,10 +1,8 @@
-using UnityEngine;
-
 namespace Veauty.Patch
 {
-    public class Attach : IPatch
+    public class Attach<T> : IPatch<T>
     {
-        private GameObject gameObject;
+        private T target;
         private readonly int index;
         public readonly System.Type oldComponent;
         public readonly System.Type newComponent;
@@ -14,12 +12,12 @@ namespace Veauty.Patch
             this.index = index;
             this.oldComponent = oldComponent;
             this.newComponent = newComponent;
-            this.gameObject = null;
+            this.target = default(T);
         }
         
-        public GameObject GetGameObject() => this.gameObject;
+        public T GetTarget() => this.target;
 
-        public void SetGameObject(in GameObject go) => this.gameObject = go;
+        public void SetTarget(in T target) => this.target = target;
 
         public int GetIndex() => this.index;
     }
