@@ -4,9 +4,18 @@ namespace Veauty.VTree
 {
     public abstract class Widget<T> : IVTree, IParent
     {
+        protected IAttribute<T> attrs;
+        protected IVTree[] kids;
+        
+        public Widget(IAttribute<T> attrs, params IVTree[] kids)
+        {
+            this.attrs = attrs;
+            this.kids = kids;
+        }
+
         public VTreeType GetNodeType() => VTreeType.Widget;
 
-        public abstract IVTree[] GetKids();
+        public IVTree[] GetKids() => this.kids;
 
         public abstract T Init(T obj);
 

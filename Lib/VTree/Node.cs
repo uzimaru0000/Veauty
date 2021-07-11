@@ -30,7 +30,7 @@ namespace Veauty.VTree
         public readonly IVTree[] kids;
         private readonly int descendantsCount;
 
-        protected BaseNode(string tag, IAttribute<T>[] attrs, IVTree[] kids): base(tag, attrs)
+        protected BaseNode(string tag, IAttribute<T>[] attrs, params IVTree[] kids): base(tag, attrs)
         {
             this.kids = kids;
             this.descendantsCount = 0;
@@ -50,7 +50,7 @@ namespace Veauty.VTree
     {
         private System.Type componentType;
 
-        public Node(string tag, IAttribute<U>[] attrs, IVTree[] kids) : base(tag, attrs, kids)
+        public Node(string tag, IAttribute<U>[] attrs, params IVTree[] kids) : base(tag, attrs, kids)
         {
             componentType = typeof(T);
         }
@@ -60,7 +60,7 @@ namespace Veauty.VTree
     
     public class Node<T> : BaseNode<T>
     {
-        public Node(string tag, IAttribute<T>[] attrs, IVTree[] kids) : base(tag, attrs, kids) { }
+        public Node(string tag, IAttribute<T>[] attrs, params IVTree[] kids) : base(tag, attrs, kids) { }
     }
     
     // KeyedNode
@@ -71,7 +71,7 @@ namespace Veauty.VTree
         private readonly int descendantsCount;
         private readonly IVTree[] dekeyedKids;
 
-        protected BaseKeyedNode(string tag, IAttribute<T>[] attrs, (string, IVTree)[] kids) : base(tag, attrs)
+        protected BaseKeyedNode(string tag, IAttribute<T>[] attrs, params (string, IVTree)[] kids) : base(tag, attrs)
         {
             this.kids = kids;
             this.descendantsCount = 0;
@@ -95,7 +95,7 @@ namespace Veauty.VTree
     {
         private System.Type componentType;
 
-        public KeyedNode(string tag, IAttribute<U>[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids)
+        public KeyedNode(string tag, IAttribute<U>[] attrs, params (string, IVTree)[] kids) : base(tag, attrs, kids)
         {
             componentType = typeof(T);
         }
@@ -105,6 +105,6 @@ namespace Veauty.VTree
 
     public class KeyedNode<T> : BaseKeyedNode<T>
     {
-        public KeyedNode(string tag, IAttribute<T>[] attrs, (string, IVTree)[] kids) : base(tag, attrs, kids) { }
+        public KeyedNode(string tag, IAttribute<T>[] attrs, params (string, IVTree)[] kids) : base(tag, attrs, kids) { }
     }
 }
