@@ -4,10 +4,10 @@ namespace Veauty.VTree
 {
     public abstract class Widget<T> : IVTree, IParent
     {
-        protected IAttribute<T> attrs;
+        protected IAttribute<T>[] attrs;
         protected IVTree[] kids;
         
-        public Widget(IAttribute<T> attrs, params IVTree[] kids)
+        public Widget(IAttribute<T>[] attrs, params IVTree[] kids)
         {
             this.attrs = attrs;
             this.kids = kids;
