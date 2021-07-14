@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Veauty.VTree
@@ -13,7 +14,7 @@ namespace Veauty.VTree
         public readonly string tag;
         public readonly Attributes<T> attrs;
 
-        protected NodeBase(string tag, IAttribute<T>[] attrs)
+        protected NodeBase(string tag, IEnumerable<IAttribute<T>> attrs)
         {
             this.tag = tag;
             this.attrs = new Attributes<T>(attrs);
@@ -31,7 +32,7 @@ namespace Veauty.VTree
         public readonly IVTree[] kids;
         private readonly int descendantsCount;
 
-        protected BaseNode(string tag, IAttribute<T>[] attrs, params IVTree[] kids): base(tag, attrs)
+        protected BaseNode(string tag, IEnumerable<IAttribute<T>> attrs, params IVTree[] kids): base(tag, attrs)
         {
             this.kids = kids;
             this.descendantsCount = 0;
@@ -42,6 +43,8 @@ namespace Veauty.VTree
             }
             this.descendantsCount += kids.Length;
         }
+
+        protected BaseNode(string tag, IEnumerable<IAttribute<T>> attrs, IEnumerable<IVTree> kids): this(tag, attrs, kids.ToArray()) {}
 
         public override int GetDescendantsCount() => this.descendantsCount;
         public override IVTree[] GetKids() => this.kids;
@@ -77,14 +80,16 @@ namespace Veauty.VTree
         }
     }
     
-    public class Node<T, U> : BaseNode<U>, ITypedNode
+    public class Node<T, U> : BaseNode<T>, ITypedNode
     {
         private System.Type componentType;
 
-        public Node(string tag, IAttribute<U>[] attrs, params IVTree[] kids) : base(tag, attrs, kids)
+        public Node(string tag, IEnumerable<IAttribute<T>> attrs, params IVTree[] kids) : base(tag, attrs, kids)
         {
-            componentType = typeof(T);
+            componentType = typeof(U);
         }
+
+        public Node(string tag, IEnumerable<IAttribute<T>> attrs, IEnumerable<IVTree> kids) : this(tag, attrs, kids.ToArray()) {}
 
         public Type GetComponentType() => componentType;
 
@@ -92,7 +97,7 @@ namespace Veauty.VTree
 
         bool Equals(Node<T, U> obj)
         {
-            return base.Equals(obj as BaseNode<U>) && this.componentType == obj.componentType;
+            return base.Equals(obj as BaseNode<T>) && this.componentType == obj.componentType;
         }
         
         public override int GetHashCode()
@@ -103,7 +108,8 @@ namespace Veauty.VTree
     
     public class Node<T> : BaseNode<T>
     {
-        public Node(string tag, IAttribute<T>[] attrs, params IVTree[] kids) : base(tag, attrs, kids) { }
+        public Node(string tag, IEnumerable<IAttribute<T>> attrs, params IVTree[] kids) : base(tag, attrs, kids) { }
+        public Node(string tag, IEnumerable<IAttribute<T>> attrs, IEnumerable<IVTree> kids) : base(tag, attrs, kids) { }
     }
     
     // KeyedNode
@@ -114,7 +120,7 @@ namespace Veauty.VTree
         private readonly int descendantsCount;
         private readonly IVTree[] dekeyedKids;
 
-        protected BaseKeyedNode(string tag, IAttribute<T>[] attrs, params (string, IVTree)[] kids) : base(tag, attrs)
+        protected BaseKeyedNode(string tag, IEnumerable<IAttribute<T>> attrs, params (string, IVTree)[] kids) : base(tag, attrs)
         {
             this.kids = kids;
             this.descendantsCount = 0;
@@ -128,6 +134,8 @@ namespace Veauty.VTree
             }
             this.descendantsCount += kids.Length;
         }
+
+        protected BaseKeyedNode(string tag, IEnumerable<IAttribute<T>> attrs, IEnumerable<(string, IVTree)> kids) : this(tag, attrs, kids.ToArray()) {}
 
         public override int GetDescendantsCount() => this.descendantsCount;
 
@@ -164,14 +172,15 @@ namespace Veauty.VTree
         }
     }
     
-    public class KeyedNode<T, U> : BaseKeyedNode<U>, ITypedNode
+    public class KeyedNode<T, U> : BaseKeyedNode<T>, ITypedNode
     {
         private System.Type componentType;
 
-        public KeyedNode(string tag, IAttribute<U>[] attrs, params (string, IVTree)[] kids) : base(tag, attrs, kids)
+        public KeyedNode(string tag, IEnumerable<IAttribute<T>> attrs, params (string, IVTree)[] kids) : base(tag, attrs, kids)
         {
-            componentType = typeof(T);
+            componentType = typeof(U);
         }
+        public KeyedNode(string tag, IEnumerable<IAttribute<T>> attrs, IEnumerable<(string, IVTree)> kids) : this(tag, attrs, kids.ToArray()) {}
 
         public Type GetComponentType() => componentType;
 
@@ -179,7 +188,7 @@ namespace Veauty.VTree
 
         bool Equals(KeyedNode<T, U> obj)
         {
-            return base.Equals(obj as BaseNode<U>) && this.componentType == obj.componentType;
+            return base.Equals(obj as BaseNode<T>) && this.componentType == obj.componentType;
         }
         
         public override int GetHashCode()
