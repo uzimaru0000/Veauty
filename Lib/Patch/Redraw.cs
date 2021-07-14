@@ -18,5 +18,33 @@ namespace Veauty.Patch
 
         public int GetIndex() => this.index;
 
+        public override bool Equals(object obj) => this.Equals(obj as Redraw<T>);
+
+        public bool Equals(Redraw<T> obj)
+        {
+            if (obj is null)
+            {
+                return false;
+            }
+
+            if (System.Object.ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (this.GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+
+            return this.index == obj.index && this.vTree.Equals(this.vTree);
+        }
+
+        public override int GetHashCode()
+        {
+            return new { index, vTree }.GetHashCode();
+        }
+
     }
 }

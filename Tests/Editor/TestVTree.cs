@@ -1,105 +1,124 @@
-﻿using System.Collections.Generic;
-using NUnit.Framework;
-using UnityEngine;
+﻿using NUnit.Framework;
 using Veauty;
 using Veauty.VTree;
 using Veauty.Patch;
 
 namespace Tests
 {
-    public class TestableAttribute : Attribute<GameObject, int>
+    public class TestableAttribute : Attribute<object, int>
     {
         public TestableAttribute(int value) : base("test", value) {}
-        public override void Apply(GameObject go) {}
+        public override void Apply(object go) {}
     }
 
-    public class PatchComparer<T> : IEqualityComparer<IPatch<T>>
+    public class TestWidget : Widget<object>
     {
-        public bool Equals(IPatch<T> x, IPatch<T> y)
-        {
-            if (x is Append<T> appendX && y is Append<T> appendY)
-            {
-                return appendX.length == appendY.length && appendX.kids.Equals(appendY);
-            }
-            else if (x is Attach<T> attachX && y is Attach<T> attachY)
-            {
-                return attachX.newComponent == attachY.newComponent && attachX.oldComponent == attachY.oldComponent;
-            }
-            else if (x is Attrs<T> attrsX && y is Attrs<T> attrsY)
-            {
-                return attrsX.index == attrsY.index && attrsX.attrs.Equals(attrsY.attrs);
-            }
-            else if (x is Redraw<T> redrawX && y is Redraw<T> redrawY)
-            {
-                return redrawX.index == redrawY.index;
-            }
-            else if (x is Remove<T> removeX && y is Remove<T> removeY)
-            {
-                return removeX.entry == removeY.entry;
-            }
-            else if (x is RemoveLast<T> removeLastX && y is RemoveLast<T> removeLastY)
-            {
-                return removeLastX.diff == removeLastY.diff && removeLastX.length == removeLastY.length;
-            }
-            else if (x is Reorder<T> reorderX && y is Reorder<T> reorderY)
-            {
-                return reorderX.endInserts.Equals(reorderY.endInserts);
-            }
+        public TestWidget(IAttribute<object>[] attrs, params IVTree[] kids) : base(attrs, kids) { }
 
-            return false;
-        }
+        public override void Destroy(object obj) {}
 
-        public int GetHashCode(IPatch<T> x)
-        {
-            return x.GetHashCode();
-        }
+        public override object Init(object obj) => obj;
+
+        public override IVTree Render()
+            => new Node<object>("test", this.attrs, this.kids);
     }
 
     public class TestVTree
     {
         [TestCaseSource("TestCase")]
-        public void TestDiff(Veauty.IVTree oldTree, Veauty.IVTree newTree, Veauty.IPatch<GameObject>[] expected)
+        public void TestDiff(Veauty.IVTree oldTree, Veauty.IVTree newTree, Veauty.IPatch<object>[] expected)
         {
-            var actual = Veauty.Diff<GameObject>.Calc(oldTree, newTree);
-
-            Assert.AreEqual(expected.Length, actual.Length);
-            for (var i = 0; i < actual.Length; i++)
-            {
-                Assert.That(actual[i], Is.EqualTo(expected[i]).Using(new PatchComparer<GameObject>()));
-            }
+            var actual = Veauty.Diff<object>.Calc(oldTree, newTree);
+            CollectionAssert.AreEqual(actual, expected);
         }
 
         static object[] TestCase =
         {
             new object[] { 
-                new Node<GameObject>("tag", new IAttribute<GameObject>[] {}, new IVTree[] {}),
-                new Node<GameObject>("tag", new IAttribute<GameObject>[] {}, new IVTree[] {}),
-                new IPatch<GameObject>[] {}
+                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {}),
+                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {}),
+                new IPatch<object>[] {}
             },
             new object[] {
-                new Node<GameObject>("tag", new IAttribute<GameObject>[] {
+                new Node<object>("tag", new IAttribute<object>[] {
                     new TestableAttribute(10)
                 }, new IVTree[] {}),
-                new Node<GameObject>("tag", new IAttribute<GameObject>[] {
+                new Node<object>("tag", new IAttribute<object>[] {
                     new TestableAttribute(10)
                 }, new IVTree[] {}),
-                new IPatch<GameObject>[] {}
+                new IPatch<object>[] {}
             },
             new object[] {
-                new Node<GameObject>("tag", new IAttribute<GameObject>[] {}, new IVTree[] {
-                    new Node<GameObject>("child", new IAttribute<GameObject>[] {}, new IVTree[] {})
+                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {
+                    new Node<object>("child", new IAttribute<object>[] {}, new IVTree[] {})
                 }),
-                new Node<GameObject>("tag", new IAttribute<GameObject>[] {}, new IVTree[] {
-                    new Node<GameObject>("child", new IAttribute<GameObject>[] {}, new IVTree[] {})
+                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {
+                    new Node<object>("child", new IAttribute<object>[] {}, new IVTree[] {})
                 }),
-                new IPatch<GameObject>[] {}
+                new IPatch<object>[] {}
             },
             new object[] {
-                new Node<GameObject>("tag", new IAttribute<GameObject>[] {}, new IVTree[] {}),
-                new Node<GameObject>("gat", new IAttribute<GameObject>[] {}, new IVTree[] {}),
-                new IPatch<GameObject>[] {
-                    new Redraw<GameObject>(0, new Node<GameObject>("gat", new IAttribute<GameObject>[] {}, new IVTree[] {}))
+                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {}),
+                new Node<object>("gat", new IAttribute<object>[] {}, new IVTree[] {}),
+                new IPatch<object>[] {
+                    new Redraw<object>(0, new Node<object>("gat", new IAttribute<object>[] {}, new IVTree[] {}))
                 },
+            },
+            new object[] {
+                new TestWidget(new IAttribute<object>[] {}),
+                new TestWidget(new IAttribute<object>[] {}),
+                new IPatch<object>[] {}
+            },
+            new object[] {
+                new TestWidget(new IAttribute<object>[] {
+                    new TestableAttribute(10)
+                }),
+                new TestWidget(new IAttribute<object>[] {}),
+                new IPatch<object>[] {
+                    new Attrs<object>(0, new System.Collections.Generic.Dictionary<string, IAttribute<object>>() {
+                        { "test", null }
+                    })
+                }
+            },
+            new object[] {
+                new Node<object>(
+                    "todo",
+                    new IAttribute<object>[] {},
+                    new Node<object>("todo1", new IAttribute<object>[] {}),
+                    new Node<object>("todo2", new IAttribute<object>[] {})
+                ),
+                new Node<object>(
+                    "todo",
+                    new IAttribute<object>[] {},
+                    new Node<object>("todo1", new IAttribute<object>[] {}),
+                    new Node<object>("todo2", new IAttribute<object>[] {}),
+                    new Node<object>("todo3", new IAttribute<object>[] {})
+                ),
+                new IPatch<object>[] {
+                    new Append<object>(0, 2, new IVTree[] {
+                        new Node<object>("todo1", new IAttribute<object>[] {}),
+                        new Node<object>("todo2", new IAttribute<object>[] {}),
+                        new Node<object>("todo3", new IAttribute<object>[] {})
+                    })
+                }
+            },
+            new object[] {
+                new Node<object>(
+                    "todo",
+                    new IAttribute<object>[] {},
+                    new Node<object>("todo1", new IAttribute<object>[] {}),
+                    new Node<object>("todo2", new IAttribute<object>[] {}),
+                    new Node<object>("todo3", new IAttribute<object>[] {})
+                ),
+                new Node<object>(
+                    "todo",
+                    new IAttribute<object>[] {},
+                    new Node<object>("todo1", new IAttribute<object>[] {}),
+                    new Node<object>("todo2", new IAttribute<object>[] {})
+                ),
+                new IPatch<object>[] {
+                    new RemoveLast<object>(0, 2, 1)
+                }
             }
         };
     }

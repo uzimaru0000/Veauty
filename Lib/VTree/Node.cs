@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace Veauty.VTree
 {
@@ -44,6 +45,36 @@ namespace Veauty.VTree
 
         public override int GetDescendantsCount() => this.descendantsCount;
         public override IVTree[] GetKids() => this.kids;
+
+        public override bool Equals(object obj) => this.Equals(obj as BaseNode<T>);
+
+        bool Equals(BaseNode<T> obj)
+        {
+            if (obj is null)
+            {
+                return false;
+            }
+
+            if (System.Object.ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (this.GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+
+            return this.tag == obj.tag &&
+                   this.attrs.attrs.SequenceEqual(this.attrs.attrs) &&
+                   this.descendantsCount == obj.descendantsCount;
+        }
+        
+        public override int GetHashCode()
+        {
+            return new { tag, kids, attrs }.GetHashCode();
+        }
     }
     
     public class Node<T, U> : BaseNode<U>, ITypedNode
@@ -56,6 +87,18 @@ namespace Veauty.VTree
         }
 
         public Type GetComponentType() => componentType;
+
+        public override bool Equals(object obj) => this.Equals(obj as Node<T, U>);
+
+        bool Equals(Node<T, U> obj)
+        {
+            return base.Equals(obj as BaseNode<U>) && this.componentType == obj.componentType;
+        }
+        
+        public override int GetHashCode()
+        {
+            return new { tag, componentType, kids, attrs }.GetHashCode();
+        }
     }
     
     public class Node<T> : BaseNode<T>
@@ -89,6 +132,36 @@ namespace Veauty.VTree
         public override int GetDescendantsCount() => this.descendantsCount;
 
         public override IVTree[] GetKids() => this.dekeyedKids;
+
+        public override bool Equals(object obj) => this.Equals(obj as BaseKeyedNode<T>);
+
+        bool Equals(BaseKeyedNode<T> obj)
+        {
+            if (obj is null)
+            {
+                return false;
+            }
+
+            if (System.Object.ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (this.GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+
+            return this.tag == obj.tag &&
+                   this.attrs.attrs.SequenceEqual(this.attrs.attrs) &&
+                   this.descendantsCount == obj.descendantsCount;
+        }
+        
+        public override int GetHashCode()
+        {
+            return new { tag, kids, attrs }.GetHashCode();
+        }
     }
     
     public class KeyedNode<T, U> : BaseKeyedNode<U>, ITypedNode
@@ -101,6 +174,18 @@ namespace Veauty.VTree
         }
 
         public Type GetComponentType() => componentType;
+
+        public override bool Equals(object obj) => this.Equals(obj as KeyedNode<T, U>);
+
+        bool Equals(KeyedNode<T, U> obj)
+        {
+            return base.Equals(obj as BaseNode<U>) && this.componentType == obj.componentType;
+        }
+        
+        public override int GetHashCode()
+        {
+            return new { tag, componentType, kids, attrs }.GetHashCode();
+        }
     }
 
     public class KeyedNode<T> : BaseKeyedNode<T>
