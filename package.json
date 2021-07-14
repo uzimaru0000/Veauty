@@ -1,7 +1,7 @@
 {
   "name": "com.uzimaru.veauty",
   "displayName": "Veauty",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "unity": "2020.3",
   "description": "Implementation of Virtual-Dom for Unity3D",
   "keywords": ["Library", "Virtual-Dom", "VDOM"],
