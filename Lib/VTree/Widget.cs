@@ -1,17 +1,20 @@
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Veauty.VTree
 {
     public abstract class Widget<T> : IVTree, IParent
     {
-        protected IAttribute<T>[] attrs;
+        protected IEnumerable<IAttribute<T>> attrs;
         protected IVTree[] kids;
         
-        public Widget(IAttribute<T>[] attrs, params IVTree[] kids)
+        public Widget(IEnumerable<IAttribute<T>> attrs, params IVTree[] kids)
         {
             this.attrs = attrs;
             this.kids = kids;
         }
+
+        public Widget(IEnumerable<IAttribute<T>> attrs, IEnumerable<IVTree> kids) : this(attrs, kids.ToArray()) {}
 
         public VTreeType GetNodeType() => VTreeType.Widget;
 

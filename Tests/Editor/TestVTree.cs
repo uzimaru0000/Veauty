@@ -35,33 +35,33 @@ namespace Tests
         static object[] TestCase =
         {
             new object[] { 
-                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {}),
-                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {}),
+                new Node<object>("tag", new IAttribute<object>[] {}),
+                new Node<object>("tag", new IAttribute<object>[] {}),
                 new IPatch<object>[] {}
             },
             new object[] {
                 new Node<object>("tag", new IAttribute<object>[] {
                     new TestableAttribute(10)
-                }, new IVTree[] {}),
+                }),
                 new Node<object>("tag", new IAttribute<object>[] {
                     new TestableAttribute(10)
-                }, new IVTree[] {}),
-                new IPatch<object>[] {}
-            },
-            new object[] {
-                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {
-                    new Node<object>("child", new IAttribute<object>[] {}, new IVTree[] {})
-                }),
-                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {
-                    new Node<object>("child", new IAttribute<object>[] {}, new IVTree[] {})
                 }),
                 new IPatch<object>[] {}
             },
             new object[] {
-                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {}),
-                new Node<object>("gat", new IAttribute<object>[] {}, new IVTree[] {}),
+                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {
+                    new Node<object>("child", new IAttribute<object>[] {})
+                }),
+                new Node<object>("tag", new IAttribute<object>[] {}, new IVTree[] {
+                    new Node<object>("child", new IAttribute<object>[] {})
+                }),
+                new IPatch<object>[] {}
+            },
+            new object[] {
+                new Node<object>("tag", new IAttribute<object>[] {}),
+                new Node<object>("gat", new IAttribute<object>[] {}),
                 new IPatch<object>[] {
-                    new Redraw<object>(0, new Node<object>("gat", new IAttribute<object>[] {}, new IVTree[] {}))
+                    new Redraw<object>(0, new Node<object>("gat", new IAttribute<object>[] {}))
                 },
             },
             new object[] {
