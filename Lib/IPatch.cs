@@ -63,7 +63,15 @@ namespace Veauty
 
         public override int GetHashCode()
         {
-            return new { index, tag, vTree, data }.GetHashCode();
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 397) ^ index;
+                hash = (hash * 397) ^ tag.GetHashCode();
+                hash = (hash * 397) ^ (vTree != null ? vTree.GetHashCode() : 0);
+                hash = (hash * 397) ^ (data != null ? data.GetHashCode() : 0);
+                return hash;
+            }
         }
     }
 }

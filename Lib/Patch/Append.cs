@@ -47,7 +47,18 @@ namespace Veauty.Patch
 
         public override int GetHashCode()
         {
-            return new { index, length, kids }.GetHashCode();
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 397) ^ index;
+                hash = (hash * 397) ^ length;
+                foreach (var kid in kids)
+                {
+                    hash = (hash * 397) ^ (kid != null ? kid.GetHashCode() : 0);
+                }
+
+                return hash;
+            }
         }
     }
 }

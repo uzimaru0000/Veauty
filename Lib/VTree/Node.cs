@@ -20,9 +20,64 @@ namespace Veauty.VTree
             this.attrs = new Attributes<T>(attrs);
         }
 
-        public VTreeType GetNodeType() => VTreeType.Node;
+        public virtual VTreeType GetNodeType() => VTreeType.Node;
         public abstract int GetDescendantsCount();
         public abstract IVTree[] GetKids();
+
+        protected static bool AttributesEqual(Attributes<T> x, Attributes<T> y)
+        {
+            if (x.attrs.Count != y.attrs.Count)
+            {
+                return false;
+            }
+
+            foreach (var attr in x.attrs)
+            {
+                if (!y.attrs.TryGetValue(attr.Key, out var otherAttr) || !object.Equals(attr.Value, otherAttr))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        protected static int CombineHash(int hash, object value)
+        {
+            unchecked
+            {
+                return (hash * 397) ^ (value != null ? value.GetHashCode() : 0);
+            }
+        }
+
+        protected static int GetAttributesHashCode(Attributes<T> attrs)
+        {
+            unchecked
+            {
+                var hash = 17;
+                foreach (var attr in attrs.attrs.OrderBy(x => x.Key))
+                {
+                    hash = CombineHash(hash, attr.Key);
+                    hash = CombineHash(hash, attr.Value);
+                }
+
+                return hash;
+            }
+        }
+
+        protected static int GetKidsHashCode(IEnumerable<IVTree> kids)
+        {
+            unchecked
+            {
+                var hash = 17;
+                foreach (var kid in kids)
+                {
+                    hash = CombineHash(hash, kid);
+                }
+
+                return hash;
+            }
+        }
     }
 
     // Node
@@ -70,13 +125,22 @@ namespace Veauty.VTree
 
 
             return this.tag == obj.tag &&
-                   this.attrs.attrs.SequenceEqual(this.attrs.attrs) &&
-                   this.descendantsCount == obj.descendantsCount;
+                   AttributesEqual(this.attrs, obj.attrs) &&
+                   this.descendantsCount == obj.descendantsCount &&
+                   this.kids.SequenceEqual(obj.kids);
         }
         
         public override int GetHashCode()
         {
-            return new { tag, kids, attrs }.GetHashCode();
+            unchecked
+            {
+                var hash = 17;
+                hash = CombineHash(hash, tag);
+                hash = CombineHash(hash, GetAttributesHashCode(attrs));
+                hash = CombineHash(hash, descendantsCount);
+                hash = CombineHash(hash, GetKidsHashCode(kids));
+                return hash;
+            }
         }
     }
     
@@ -102,7 +166,10 @@ namespace Veauty.VTree
         
         public override int GetHashCode()
         {
-            return new { tag, componentType, kids, attrs }.GetHashCode();
+            unchecked
+            {
+                return CombineHash(base.GetHashCode(), componentType);
+            }
         }
     }
     
@@ -137,6 +204,8 @@ namespace Veauty.VTree
 
         protected BaseKeyedNode(string tag, IEnumerable<IAttribute<T>> attrs, IEnumerable<(string, IVTree)> kids) : this(tag, attrs, kids.ToArray()) {}
 
+        public override VTreeType GetNodeType() => VTreeType.KeyedNode;
+
         public override int GetDescendantsCount() => this.descendantsCount;
 
         public override IVTree[] GetKids() => this.dekeyedKids;
@@ -162,13 +231,27 @@ namespace Veauty.VTree
 
 
             return this.tag == obj.tag &&
-                   this.attrs.attrs.SequenceEqual(this.attrs.attrs) &&
-                   this.descendantsCount == obj.descendantsCount;
+                   AttributesEqual(this.attrs, obj.attrs) &&
+                   this.descendantsCount == obj.descendantsCount &&
+                   this.kids.SequenceEqual(obj.kids);
         }
         
         public override int GetHashCode()
         {
-            return new { tag, kids, attrs }.GetHashCode();
+            unchecked
+            {
+                var hash = 17;
+                hash = CombineHash(hash, tag);
+                hash = CombineHash(hash, GetAttributesHashCode(attrs));
+                hash = CombineHash(hash, descendantsCount);
+                foreach (var (key, kid) in kids)
+                {
+                    hash = CombineHash(hash, key);
+                    hash = CombineHash(hash, kid);
+                }
+
+                return hash;
+            }
         }
     }
     
@@ -188,12 +271,15 @@ namespace Veauty.VTree
 
         bool Equals(KeyedNode<T, U> obj)
         {
-            return base.Equals(obj as BaseNode<T>) && this.componentType == obj.componentType;
+            return base.Equals(obj as BaseKeyedNode<T>) && this.componentType == obj.componentType;
         }
         
         public override int GetHashCode()
         {
-            return new { tag, componentType, kids, attrs }.GetHashCode();
+            unchecked
+            {
+                return CombineHash(base.GetHashCode(), componentType);
+            }
         }
     }
 

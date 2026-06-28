@@ -42,12 +42,41 @@ namespace Veauty.Patch
             }
 
 
-            return this.index == obj.index && this.attrs.SequenceEqual(obj.attrs);
+            return this.index == obj.index && AttrsEqual(this.attrs, obj.attrs);
         }
 
         public override int GetHashCode()
         {
-            return new { index, attrs }.GetHashCode();
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 397) ^ index;
+                foreach (var attr in attrs.OrderBy(x => x.Key))
+                {
+                    hash = (hash * 397) ^ (attr.Key != null ? attr.Key.GetHashCode() : 0);
+                    hash = (hash * 397) ^ (attr.Value != null ? attr.Value.GetHashCode() : 0);
+                }
+
+                return hash;
+            }
+        }
+
+        private static bool AttrsEqual(Dictionary<string, IAttribute<T>> x, Dictionary<string, IAttribute<T>> y)
+        {
+            if (x.Count != y.Count)
+            {
+                return false;
+            }
+
+            foreach (var attr in x)
+            {
+                if (!y.TryGetValue(attr.Key, out var otherAttr) || !object.Equals(attr.Value, otherAttr))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

@@ -38,12 +38,15 @@ namespace Veauty.Patch
             }
 
 
-            return this.index == obj.index && this.vTree.Equals(this.vTree);
+            return this.index == obj.index && object.Equals(this.vTree, obj.vTree);
         }
 
         public override int GetHashCode()
         {
-            return new { index, vTree }.GetHashCode();
+            unchecked
+            {
+                return ((index * 397) ^ (vTree != null ? vTree.GetHashCode() : 0));
+            }
         }
 
     }

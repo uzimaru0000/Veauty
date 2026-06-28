@@ -57,14 +57,14 @@ namespace Veauty
 
         private bool Equals(Attribute<T, U> other)
         {
-            return key == other.key && value.Equals(other.value);
+            return key == other.key && object.Equals(value, other.value);
         }
 
         public override int GetHashCode()
         {
             unchecked
             {
-                return ((key != null ? key.GetHashCode() : 0) * 397) ^ value.GetHashCode();
+                return ((key != null ? key.GetHashCode() : 0) * 397) ^ (value != null ? value.GetHashCode() : 0);
             }
         }
     }

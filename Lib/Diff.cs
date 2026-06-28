@@ -22,23 +22,19 @@ namespace Veauty
 
         static void Helper(IVTree x, IVTree y, ref List<IPatch<T>> patches, int index)
         {
-            // TODO: Implement `Equals` method on each node
-            // if (x.Equals(y))
-            // {
-            //     return;
-            // }
+            if (x is BaseNode<T> && y is BaseKeyedNode<T> yKeyedNode)
+            {
+                y = Dekey(yKeyedNode);
+            }
+            else if (x is BaseKeyedNode<T> xKeyedNode && y is BaseNode<T>)
+            {
+                x = Dekey(xKeyedNode);
+            }
 
             if (x.GetNodeType() != y.GetNodeType())
             {
-                if (x is BaseNode<T> && y is BaseKeyedNode<T> keyedNode)
-                {
-                    y = Dekey(keyedNode);
-                }
-                else
-                {
-                    PushPatch(ref patches, new Redraw<T>(index, y));
-                    return;
-                }
+                PushPatch(ref patches, new Redraw<T>(index, y));
+                return;
             }
             
             switch (y)
@@ -250,11 +246,11 @@ namespace Veauty
                 {
                     index++;
                     Helper(xNode, yNextNode, ref localPatches, index);
-                    InsertNode(ref changes, ref localPatches, xKey, yNode, yIndex, ref inserts);
+                    InsertNode(ref changes, ref localPatches, yKey, yNode, yIndex, ref inserts);
                     index += xNode.GetDescendantsCount();
 
                     index++;
-                    RemoveNode(ref changes, ref localPatches, xKey, xNextNode, index);
+                    RemoveNode(ref changes, ref localPatches, yKey, xNextNode, index);
                     index += xNextNode.GetDescendantsCount();
 
                     xIndex += 2;
@@ -362,11 +358,12 @@ namespace Veauty
                 var subPatches = new List<IPatch<T>>();
                 Helper(entry.vTree, vTree, ref subPatches, entry.index);
                 entry.index = yIndex;
-                entry.data = new
+                if (entry.data is Remove<T> remove)
                 {
-                    patches = subPatches,
-                    entry = entry
-                };
+                    remove.patches = subPatches.ToArray();
+                    remove.entry = entry;
+                }
+                entry.data = null;
 
                 return;
             }
@@ -396,7 +393,7 @@ namespace Veauty
 
             if (entry.tag == Entry.Type.Insert)
             {
-                entry.tag = Entry.Type.Remove;
+                entry.tag = Entry.Type.Move;
                 var subPatches = new List<IPatch<T>>();
                 Helper(vTree, entry.vTree, ref subPatches, index);
 
@@ -431,7 +428,7 @@ namespace Veauty
 
             if (keyedNode is ITypedNode typedNode)
             {
-                var genericNodeType = typeof(Node<>).MakeGenericType(typedNode.GetComponentType());
+                var genericNodeType = typeof(Node<,>).MakeGenericType(typeof(T), typedNode.GetComponentType());
                 return (BaseNode<T>) System.Activator.CreateInstance(genericNodeType, new object[] {keyedNode.tag, attrs.ToArray(), kids});
             }
             else

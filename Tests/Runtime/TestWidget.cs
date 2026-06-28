@@ -1,20 +1,35 @@
-﻿using System.Collections;
-using System.Collections.Generic;
 using NUnit.Framework;
-using UnityEngine;
-using UnityEngine.TestTools;
 using Veauty;
+using Veauty.VTree;
 
 namespace Tests
 {
     public class TestWidget
     {
-        [UnityTest]
-        public IEnumerator TestDiff()
+        [Test]
+        public void TestDescendantsCountIncludesChildrenAndTheirDescendants()
         {
-            // Use the Assert class to test conditions.
-            // Use yield to skip a frame.
-            yield return null;
+            var widget = new TestableWidget(
+                new IAttribute<object>[] {},
+                new Node<object>(
+                    "parent",
+                    new IAttribute<object>[] {},
+                    new Node<object>("child", new IAttribute<object>[] {})
+                )
+            );
+
+            Assert.AreEqual(2, widget.GetDescendantsCount());
+        }
+
+        class TestableWidget : Widget<object>
+        {
+            public TestableWidget(IAttribute<object>[] attrs, params IVTree[] kids) : base(attrs, kids) {}
+
+            public override object Init(object obj) => obj;
+
+            public override IVTree Render() => new Node<object>("widget", new IAttribute<object>[] {}, kids);
+
+            public override void Destroy(object obj) {}
         }
     }
 }

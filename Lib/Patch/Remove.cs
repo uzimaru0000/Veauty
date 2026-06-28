@@ -7,9 +7,9 @@ namespace Veauty.Patch
         private readonly int index;
         private T target;
 
-        public readonly IPatch<T>[] patches;
+        public IPatch<T>[] patches;
 
-        public readonly Entry entry;
+        public Entry entry;
 
         public Remove(int index, IPatch<T>[] patches = null, Entry entry = null)
         {
@@ -44,15 +44,37 @@ namespace Veauty.Patch
 
 
             return this.index == obj.index &&
-                   this.entry == obj.entry &&
-                   this.patches == null
-                        ? this.patches == obj.patches
-                        : this.patches.SequenceEqual(obj.patches);
+                   object.Equals(this.entry, obj.entry) &&
+                   PatchesEqual(this.patches, obj.patches);
         }
 
         public override int GetHashCode()
         {
-            return new { index, patches, entry }.GetHashCode();
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 397) ^ index;
+                hash = (hash * 397) ^ (entry != null ? entry.GetHashCode() : 0);
+                if (patches != null)
+                {
+                    foreach (var patch in patches)
+                    {
+                        hash = (hash * 397) ^ (patch != null ? patch.GetHashCode() : 0);
+                    }
+                }
+
+                return hash;
+            }
+        }
+
+        private static bool PatchesEqual(IPatch<T>[] x, IPatch<T>[] y)
+        {
+            if (x == null || y == null)
+            {
+                return x == y;
+            }
+
+            return x.SequenceEqual(y);
         }
     }
 }

@@ -50,7 +50,28 @@ namespace Veauty.Patch
 
         public override int GetHashCode()
         {
-            return new { index, patches, inserts, endInserts }.GetHashCode();
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 397) ^ index;
+                hash = CombineArrayHash(hash, patches);
+                hash = CombineArrayHash(hash, inserts);
+                hash = CombineArrayHash(hash, endInserts);
+                return hash;
+            }
+        }
+
+        private static int CombineArrayHash<TValue>(int hash, TValue[] values)
+        {
+            unchecked
+            {
+                foreach (var value in values)
+                {
+                    hash = (hash * 397) ^ (value != null ? value.GetHashCode() : 0);
+                }
+
+                return hash;
+            }
         }
 
         public class Insert
@@ -77,7 +98,10 @@ namespace Veauty.Patch
             
             public override int GetHashCode()
             {
-                return new { index, entry }.GetHashCode(); 
+                unchecked
+                {
+                    return (index * 397) ^ (entry != null ? entry.GetHashCode() : 0);
+                }
             }
         }
     }
