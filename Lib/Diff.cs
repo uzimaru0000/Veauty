@@ -61,7 +61,7 @@ namespace Veauty
 
                     return;
                 default:
-                    throw new Exception("Invalid VTree type");
+                    throw new ArgumentException($"Unsupported IVTree type: {y.GetType()}");
             }
         }
 
