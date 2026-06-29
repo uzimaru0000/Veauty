@@ -26,6 +26,8 @@ namespace Veauty.VTree
 
         public abstract void Destroy(T obj);
 
+        public virtual void AfterRenderKids(T obj) { }
+
         public int GetDescendantsCount() => this.GetKids().Sum(x => x.GetDescendantsCount()) + this.GetKids().Length;
     }
 }
