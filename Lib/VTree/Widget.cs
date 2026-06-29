@@ -18,7 +18,7 @@ namespace Veauty.VTree
 
         public VTreeType GetNodeType() => VTreeType.Widget;
 
-        public IVTree[] GetKids() => this.kids;
+        public virtual IVTree[] GetKids() => this.kids;
 
         public abstract T Init(T obj);
 
