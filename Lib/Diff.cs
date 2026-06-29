@@ -406,6 +406,13 @@ namespace Veauty
             var oldTree = x.Render();
             var newTree = y.Render();
 
+            if (oldTree.GetNodeType() != newTree.GetNodeType()
+                || (oldTree is BaseNode<T> ox && newTree is BaseNode<T> oy && ox.tag != oy.tag))
+            {
+                PushPatch(ref patches, new Redraw<T>(index, y));
+                return;
+            }
+
             Helper(oldTree, newTree, ref patches, index);
         }
 
