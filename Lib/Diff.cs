@@ -72,16 +72,13 @@ namespace Veauty
             int index
         )
         {
-            var attach = CheckComponentType(x, y, index);
-
-            // Not TypedNode and not Equal tag name
-            if (attach == null && x.tag != y.tag)
+            if (x.tag != y.tag)
             {
                 PushPatch(ref patches, new Redraw<T>(index, y));
                 return;
             }
 
-            // TypedNode has a different type
+            var attach = CheckComponentType(x, y, index);
             if (attach != null)
             {
                 PushPatch(ref patches, attach);
