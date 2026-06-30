@@ -6,5 +6,7 @@
   "description": "Implementation of Virtual-Dom for Unity3D",
   "keywords": ["Library", "Virtual-Dom", "VDOM"],
   "category": "Library",
-  "dependencies": {}
+  "dependencies": {
+    "com.unity.nuget.mono-cecil": "1.11.6"
+  }
 }

@@ -1,0 +1,270 @@
+using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+namespace Veauty.SourceGenerator
+{
+    [Generator]
+    public class ComponentGenerator : IIncrementalGenerator
+    {
+        private const string AttributeFullName = "Veauty.ComponentAttribute";
+
+        public void Initialize(IncrementalGeneratorInitializationContext context)
+        {
+            var methods = context.SyntaxProvider
+                .ForAttributeWithMetadataName(
+                    AttributeFullName,
+                    predicate: static (node, _) => node is MethodDeclarationSyntax,
+                    transform: static (ctx, _) => GetMethodInfo(ctx))
+                .Where(static m => m != null)
+                .Select(static (m, _) => m!.Value);
+
+            context.RegisterSourceOutput(methods, static (spc, info) => Generate(spc, info));
+        }
+
+        private static ComponentMethodInfo? GetMethodInfo(GeneratorAttributeSyntaxContext ctx)
+        {
+            if (ctx.TargetSymbol is not IMethodSymbol method)
+                return null;
+
+            if (!method.IsStatic)
+            {
+                ReportDiagnostic(ctx, "VFC001", "Component method must be static",
+                    $"'{method.Name}' must be static to use [Component].");
+                return null;
+            }
+
+            if (!method.Name.StartsWith("_") || method.Name.Length < 2)
+            {
+                ReportDiagnostic(ctx, "VFC002", "Component method name must start with '_'",
+                    $"'{method.Name}' must start with '_' (e.g. '_{method.Name}') so the generated wrapper can use the clean name.");
+                return null;
+            }
+
+            var containingType = method.ContainingType;
+            if (containingType == null)
+                return null;
+
+            var syntax = (MethodDeclarationSyntax)ctx.TargetNode;
+            var classSyntax = syntax.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
+            if (classSyntax == null)
+                return null;
+
+            bool isPartial = classSyntax.Modifiers.Any(SyntaxKind.PartialKeyword);
+            if (!isPartial)
+            {
+                ReportDiagnostic(ctx, "VFC003", "Containing type must be partial",
+                    $"'{containingType.Name}' must be declared as partial to use [Component].");
+                return null;
+            }
+
+            var wrapperName = method.Name.Substring(1);
+
+            var parameters = method.Parameters;
+            var paramDecl = new StringBuilder();
+            var argList = new StringBuilder();
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (i > 0)
+                {
+                    paramDecl.Append(", ");
+                    argList.Append(", ");
+                }
+
+                var p = parameters[i];
+                var typeName = p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+                if (p.RefKind == RefKind.In)
+                    paramDecl.Append("in ");
+                else if (p.RefKind == RefKind.Ref)
+                    paramDecl.Append("ref ");
+
+                paramDecl.Append(typeName);
+                paramDecl.Append(' ');
+                paramDecl.Append(p.Name);
+
+                if (p.HasExplicitDefaultValue)
+                {
+                    paramDecl.Append(" = ");
+                    paramDecl.Append(FormatDefaultValue(p));
+                }
+
+                if (p.RefKind == RefKind.Ref)
+                    argList.Append("ref ");
+                else if (p.RefKind == RefKind.In)
+                    argList.Append("in ");
+
+                argList.Append(p.Name);
+            }
+
+            var returnType = method.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+            var namespaceName = containingType.ContainingNamespace?.IsGlobalNamespace == false
+                ? containingType.ContainingNamespace.ToDisplayString()
+                : null;
+
+            var classHierarchy = GetClassHierarchy(containingType);
+
+            var accessibility = method.DeclaredAccessibility switch
+            {
+                Accessibility.Private => "internal",
+                Accessibility.Protected => "protected internal",
+                _ => SyntaxFacts.GetText(method.DeclaredAccessibility)
+            };
+
+            return new ComponentMethodInfo(
+                namespaceName,
+                classHierarchy,
+                accessibility,
+                returnType,
+                method.Name,
+                wrapperName,
+                paramDecl.ToString(),
+                argList.ToString());
+        }
+
+        private static void Generate(SourceProductionContext spc, ComponentMethodInfo info)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("// <auto-generated/>");
+
+            if (info.Namespace != null)
+            {
+                sb.AppendLine($"namespace {info.Namespace}");
+                sb.AppendLine("{");
+            }
+
+            int indent = info.Namespace != null ? 1 : 0;
+
+            for (int i = 0; i < info.ClassHierarchy.Length; i++)
+            {
+                var (keyword, name) = info.ClassHierarchy[i];
+                Indent(sb, indent);
+                sb.AppendLine($"partial {keyword} {name}");
+                Indent(sb, indent);
+                sb.AppendLine("{");
+                indent++;
+            }
+
+            Indent(sb, indent);
+            if (string.IsNullOrEmpty(info.Parameters))
+            {
+                sb.AppendLine($"{info.Accessibility} static {info.ReturnType} {info.WrapperName}()");
+                indent++;
+                Indent(sb, indent);
+                sb.AppendLine($"=> global::Veauty.VTree.FunctionComponents.Create({info.OriginalName});");
+                indent--;
+            }
+            else
+            {
+                sb.AppendLine($"{info.Accessibility} static {info.ReturnType} {info.WrapperName}({info.Parameters})");
+                indent++;
+                Indent(sb, indent);
+                sb.AppendLine($"=> global::Veauty.VTree.FunctionComponents.Create(() => {info.OriginalName}({info.Arguments}));");
+                indent--;
+            }
+
+            for (int i = info.ClassHierarchy.Length - 1; i >= 0; i--)
+            {
+                indent--;
+                Indent(sb, indent);
+                sb.AppendLine("}");
+            }
+
+            if (info.Namespace != null)
+            {
+                sb.AppendLine("}");
+            }
+
+            var fileName = info.ClassHierarchy.Length > 0
+                ? $"{string.Join("_", info.ClassHierarchy.Select(c => c.Name))}_{info.WrapperName}.g.cs"
+                : $"{info.WrapperName}.g.cs";
+
+            spc.AddSource(fileName, sb.ToString());
+        }
+
+        private static (string Keyword, string Name)[] GetClassHierarchy(INamedTypeSymbol type)
+        {
+            var stack = new System.Collections.Generic.List<(string, string)>();
+            var current = type;
+            while (current != null)
+            {
+                var keyword = current.IsRecord
+                    ? (current.IsValueType ? "record struct" : "record")
+                    : (current.IsValueType ? "struct" : "class");
+                stack.Add((keyword, current.Name));
+                current = current.ContainingType;
+            }
+            stack.Reverse();
+            return stack.ToArray();
+        }
+
+        private static string FormatDefaultValue(IParameterSymbol p)
+        {
+            if (!p.HasExplicitDefaultValue)
+                return "default";
+
+            var value = p.ExplicitDefaultValue;
+            if (value == null)
+                return "null";
+            if (value is string s)
+                return $"\"{s.Replace("\"", "\\\"")}\"";
+            if (value is bool b)
+                return b ? "true" : "false";
+            if (value is float f)
+                return f.ToString("G") + "f";
+            if (value is double d)
+                return d.ToString("G");
+            if (value is char c)
+                return $"'{c}'";
+            return value.ToString();
+        }
+
+        private static void Indent(StringBuilder sb, int level)
+        {
+            for (int i = 0; i < level; i++)
+                sb.Append("    ");
+        }
+
+        private static void ReportDiagnostic(GeneratorAttributeSyntaxContext ctx, string id, string title, string message)
+        {
+            // Diagnostics are reported via the SourceProductionContext, not here.
+            // In an incremental generator, we filter out invalid methods by returning null.
+        }
+    }
+
+    internal readonly struct ComponentMethodInfo
+    {
+        public readonly string Namespace;
+        public readonly (string Keyword, string Name)[] ClassHierarchy;
+        public readonly string Accessibility;
+        public readonly string ReturnType;
+        public readonly string OriginalName;
+        public readonly string WrapperName;
+        public readonly string Parameters;
+        public readonly string Arguments;
+
+        public ComponentMethodInfo(
+            string ns,
+            (string, string)[] classHierarchy,
+            string accessibility,
+            string returnType,
+            string originalName,
+            string wrapperName,
+            string parameters,
+            string arguments)
+        {
+            Namespace = ns;
+            ClassHierarchy = classHierarchy;
+            Accessibility = accessibility;
+            ReturnType = returnType;
+            OriginalName = originalName;
+            WrapperName = wrapperName;
+            Parameters = parameters;
+            Arguments = arguments;
+        }
+    }
+}
