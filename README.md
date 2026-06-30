@@ -1,55 +1,100 @@
 # Veauty
 
-Implementation of Virtual-Dom for Unity3D
+A Virtual DOM implementation for Unity. Build UIs declaratively with a React-like API — virtual tree diffing and patching keep your GameObjects in sync efficiently.
 
-## Environment
+## Requirements
 
-- Unity3D 2020.3 or higher
-- C# 7.0
+- Unity 6000.5 or later (Unity 6)
 
 ## Install
 
-Add line in `Packages/manifest.json`
+Add to `Packages/manifest.json`:
 
 ```json
 {
   "dependencies": {
-    ...
-    "com.uzimaru.veauty": "https://github.com/uzimaru0000/Veauty.git",
-    ...
+    "com.uzimaru.veauty": "https://github.com/uzimaru0000/Veauty.git"
   }
 }
 ```
 
-## Example
+## Package structure
 
-- [Veauty-GameObject](https://github.com/uzimaru0000/Veauty-GameObject)
+Veauty is split into three packages:
 
-## Patch semantics
+| Package | Role |
+|---------|------|
+| `com.uzimaru.veauty` (this package) | VTree types, Diff algorithm, Hooks, `[Component]` attribute |
+| [`com.uzimaru.veauty-gameobject`](https://github.com/uzimaru0000/Veauty-GameObject) | Renderer, Patch applicator, `VeautyObject` entry point |
+| [`com.uzimaru.veauty-ugui`](https://github.com/uzimaru0000/Veauty-uGUI) | uGUI widgets, Presets API (`V.Text`, `V.Button`, etc.) |
 
-`Diff<T>.Calc(oldTree, newTree)` returns patches indexed by preorder traversal. The root node is index `0`; each child increments the index by one, then reserves its descendant count.
+## VTree types
 
-- `Redraw(index, vTree)` replaces the node at `index` with `vTree`.
-- `Attrs(index, attrs)` applies changed attributes to the node at `index`. A key with `null` removes that attribute.
-- `Attach(index, oldComponent, newComponent)` changes the typed component attached to a typed node.
-- `Append(index, length, kids)` appends `kids[length..]` to the node at `index`.
-- `RemoveLast(index, length, diff)` removes `diff` children starting at child position `length`.
-- `Remove(index)` removes the node at `index`.
-- `Remove(index, patches, entry)` detaches the node at `index`, applies `patches`, and stores it for a keyed move represented by `entry`.
-- `Reorder(index, patches, inserts, endInserts)` applies keyed child changes under the node at `index`. First apply `patches`, then place `inserts` at their sibling indexes, then append `endInserts`.
+- **`Node<T>`** / **`Node<T,U>`** — basic node with tag, attributes, and children. `U` is the Unity component type.
+- **`KeyedNode<T,U>`** — keyed node for efficient list diffing.
+- **`FunctionComponentNode`** — function component, created via `[Component]` attribute or `FunctionComponents.Create()`.
 
-`Entry.Type.Insert` means render `entry.vTree`. `Entry.Type.Move` means reuse the detached node associated with the same `Entry`. `Entry.Type.Remove` is an intermediate diff state and should not appear as an insert target. Keyed nodes are intended to use unique keys among siblings; duplicate keys are treated as distinct fallback entries only when a conflict is detected.
+## Hooks
 
-I'm happy if you contribute！
+APIs for managing state and lifecycle inside function components.
 
-## Development
-1. Make your project and make directory Packages in it.
-2. In Packages, git clone https://github.com/uzimaru0000/Veauty.git
+```csharp
+// State — triggers re-render on change
+var count = Hooks.UseState(0);
+count.Set(x => x + 1);
 
-## Contribution
+// Ref — mutable value that does NOT trigger re-render
+var renderCount = Hooks.UseRef(0);
+renderCount.Current++;
 
-- Fork it
-- Create your feature branch
-- Commit your changes
-- Push to the branch
-- Create new Pull Request
+// Effect — runs on mount/unmount or when dependencies change
+Hooks.UseEffect(() =>
+{
+    Debug.Log("mounted");
+    return () => Debug.Log("unmounted");  // cleanup
+}, new object[] { /* dependencies */ });
+```
+
+## `[Component]` attribute
+
+Mark a static method with `[Component]` to turn it into a function component. An ILPostProcessor wraps the method body in `FunctionComponents.Create()` at compile time, so callers invoke it like a regular method.
+
+```csharp
+// Definition
+[Component]
+static IVTree Timer(float interval)
+{
+    var elapsed = Hooks.UseState(0f);
+    Hooks.UseEffect(() => { /* ... */ }, new object[] { interval });
+    return new Node<GameObject>("Timer", /* ... */);
+}
+
+// Call site — no wrapping needed
+Timer(1.0f)
+```
+
+Without `[Component]`, hooks would run in the caller's scope and would not have their own lifecycle (mount/unmount).
+
+### Building the ILPostProcessor
+
+Source lives in `SourceGenerator~/`. To rebuild after making changes:
+
+```bash
+cd SourceGenerator~
+dotnet build -c Release
+cp bin/Release/netstandard2.1/Veauty.CodeGen.dll ../CodeGen/
+```
+
+## Diff / Patch
+
+`Diff<T>.Calc(oldTree, newTree)` computes patches; `Patch.Apply()` applies them to the existing GameObject tree.
+
+| Patch type | Behavior |
+|-----------|----------|
+| `Redraw` | Replace the node |
+| `Attrs` | Apply attribute diff |
+| `Attach` | Change the typed component |
+| `Append` | Append children |
+| `RemoveLast` | Remove trailing children |
+| `Remove` | Remove the node |
+| `Reorder` | Reorder keyed children |
