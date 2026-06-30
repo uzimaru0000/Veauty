@@ -17,16 +17,18 @@ namespace Tests
         public override void Apply(object go) {}
     }
 
-    public class TestWidget : Widget<object>
+    public class TestLifecycleNode : HostLifecycleNode<object>
     {
-        public TestWidget(IAttribute<object>[] attrs, params IVTree[] kids) : base(attrs, kids) { }
+        private class NoopLifecycle : IHostLifecycle<object>
+        {
+            public static readonly NoopLifecycle Instance = new NoopLifecycle();
+            public object Init(object obj) => obj;
+            public void AfterRenderKids(object obj) {}
+            public void Destroy(object obj) {}
+        }
 
-        public override void Destroy(object obj) {}
-
-        public override object Init(object obj) => obj;
-
-        public override IVTree Render()
-            => new Node<object>("test", this.attrs, this.kids);
+        public TestLifecycleNode(IAttribute<object>[] attrs, params IVTree[] kids)
+            : base("test", attrs, new IHostLifecycle<object>[] { NoopLifecycle.Instance }, kids) { }
     }
 
     public class TestVTree
@@ -113,7 +115,20 @@ namespace Tests
         {
             Assert.AreEqual(VTreeType.Node, new Node<object>("tag", NoAttrs()).GetNodeType());
             Assert.AreEqual(VTreeType.KeyedNode, new KeyedNode<object>("tag", NoAttrs()).GetNodeType());
-            Assert.AreEqual(VTreeType.Widget, new TestWidget(NoAttrs()).GetNodeType());
+            Assert.AreEqual(VTreeType.FunctionComponent, FunctionComponents.Create(() => new Node<object>("tag", NoAttrs())).GetNodeType());
+        }
+
+        [Test]
+        public void TestDiffRejectsUnresolvedFunctionComponentsWithoutRendering()
+        {
+            var renderCount = 0;
+            var component = FunctionComponents.Create(() => {
+                renderCount++;
+                return new Node<object>("tag", NoAttrs());
+            });
+
+            Assert.Throws<System.InvalidOperationException>(() => Veauty.Diff<object>.Calc(component, component));
+            Assert.AreEqual(0, renderCount);
         }
 
         [TestCaseSource("TestCase")]
@@ -442,15 +457,15 @@ namespace Tests
                 },
             },
             new object[] {
-                new TestWidget(new IAttribute<object>[] {}),
-                new TestWidget(new IAttribute<object>[] {}),
+                new TestLifecycleNode(new IAttribute<object>[] {}),
+                new TestLifecycleNode(new IAttribute<object>[] {}),
                 new IPatch<object>[] {}
             },
             new object[] {
-                new TestWidget(new IAttribute<object>[] {
+                new TestLifecycleNode(new IAttribute<object>[] {
                     new TestableAttribute(10)
                 }),
-                new TestWidget(new IAttribute<object>[] {}),
+                new TestLifecycleNode(new IAttribute<object>[] {}),
                 new IPatch<object>[] {
                     new Attrs<object>(0, new System.Collections.Generic.Dictionary<string, IAttribute<object>>() {
                         { "test", null }
@@ -498,5 +513,6 @@ namespace Tests
                 }
             }
         };
+
     }
 }

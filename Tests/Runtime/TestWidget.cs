@@ -4,32 +4,23 @@ using Veauty.VTree;
 
 namespace Tests
 {
-    public class TestWidget
+    public class TestHostLifecycleNode
     {
         [Test]
         public void TestDescendantsCountIncludesChildrenAndTheirDescendants()
         {
-            var widget = new TestableWidget(
+            var node = new HostLifecycleNode<object>(
+                "parent",
                 new IAttribute<object>[] {},
+                new IHostLifecycle<object>[] {},
                 new Node<object>(
-                    "parent",
+                    "child",
                     new IAttribute<object>[] {},
-                    new Node<object>("child", new IAttribute<object>[] {})
+                    new Node<object>("grandchild", new IAttribute<object>[] {})
                 )
             );
 
-            Assert.AreEqual(2, widget.GetDescendantsCount());
-        }
-
-        class TestableWidget : Widget<object>
-        {
-            public TestableWidget(IAttribute<object>[] attrs, params IVTree[] kids) : base(attrs, kids) {}
-
-            public override object Init(object obj) => obj;
-
-            public override IVTree Render() => new Node<object>("widget", new IAttribute<object>[] {}, kids);
-
-            public override void Destroy(object obj) {}
+            Assert.AreEqual(2, node.GetDescendantsCount());
         }
     }
 }

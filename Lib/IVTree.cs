@@ -4,7 +4,7 @@ namespace Veauty
     {
         Node,
         KeyedNode,
-        Widget
+        FunctionComponent
     }
 
     public interface IVTree
@@ -16,5 +16,10 @@ namespace Veauty
     public interface IParent
     {
         IVTree[] GetKids();
+    }
+
+    public interface IVTreeWrapper : IVTree
+    {
+        IVTree Unwrap();
     }
 }

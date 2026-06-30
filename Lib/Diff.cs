@@ -22,6 +22,14 @@ namespace Veauty
 
         static void Helper(IVTree x, IVTree y, ref List<IPatch<T>> patches, int index)
         {
+            if (x is IVTreeWrapper xWrapper) x = xWrapper.Unwrap();
+            if (y is IVTreeWrapper yWrapper) y = yWrapper.Unwrap();
+
+            if (x is FunctionComponentNode || y is FunctionComponentNode)
+            {
+                throw new InvalidOperationException("Function components must be resolved before diffing.");
+            }
+
             if (x is BaseNode<T> && y is BaseKeyedNode<T> yKeyedNode)
             {
                 y = Dekey(yKeyedNode);
@@ -53,13 +61,8 @@ namespace Veauty
                     }
 
                     return;
-                case Widget<T> yWidget:
-                    if (x is Widget<T> xWidget)
-                    {
-                        DiffWidget(xWidget, yWidget, ref patches, index);
-                    }
-
-                    return;
+                case FunctionComponentNode _:
+                    throw new InvalidOperationException("Function components must be resolved before diffing.");
                 default:
                     throw new ArgumentException($"Unsupported IVTree type: {y.GetType()}");
             }
@@ -172,8 +175,8 @@ namespace Veauty
 
         static void DiffKids(BaseNode<T> xParent, BaseNode<T> yParent, ref List<IPatch<T>> patches, int index)
         {
-            var xKids = xParent.kids;
-            var yKids = yParent.kids;
+            var xKids = xParent.GetKids();
+            var yKids = yParent.GetKids();
 
             var xLen = xKids.Length;
             var yLen = yKids.Length;
@@ -401,21 +404,6 @@ namespace Veauty
             RemoveNode(ref changes, ref localPatches, key + "UniVDOM", vTree, index);
         }
 
-        static void DiffWidget(Widget<T> x, Widget<T> y, ref List<IPatch<T>> patches, int index)
-        {
-            var oldTree = x.Render();
-            var newTree = y.Render();
-
-            if (oldTree.GetNodeType() != newTree.GetNodeType()
-                || (oldTree is BaseNode<T> ox && newTree is BaseNode<T> oy && ox.tag != oy.tag))
-            {
-                PushPatch(ref patches, new Redraw<T>(index, y));
-                return;
-            }
-
-            Helper(oldTree, newTree, ref patches, index);
-        }
-
         static BaseNode<T> Dekey(BaseKeyedNode<T> keyedNode)
         {
             var kids = new IVTree[keyedNode.kids.Length];
@@ -432,13 +420,22 @@ namespace Veauty
 
             if (keyedNode is ITypedNode typedNode)
             {
+                if (keyedNode is IHostLifecycleTree<T> typedLifecycleTree)
+                {
+                    var lifecycleNodeType = typeof(HostLifecycleNode<,>).MakeGenericType(typeof(T), typedNode.GetComponentType());
+                    return (BaseNode<T>) System.Activator.CreateInstance(lifecycleNodeType, new object[] {keyedNode.tag, attrs.ToArray(), typedLifecycleTree.GetHostLifecycles(), kids});
+                }
+
                 var genericNodeType = typeof(Node<,>).MakeGenericType(typeof(T), typedNode.GetComponentType());
                 return (BaseNode<T>) System.Activator.CreateInstance(genericNodeType, new object[] {keyedNode.tag, attrs.ToArray(), kids});
             }
-            else
+
+            if (keyedNode is IHostLifecycleTree<T> lifecycleTree)
             {
-                return new Node<T>(keyedNode.tag, attrs.ToArray(), kids);
+                return new HostLifecycleNode<T>(keyedNode.tag, attrs.ToArray(), lifecycleTree.GetHostLifecycles(), kids);
             }
+
+            return new Node<T>(keyedNode.tag, attrs.ToArray(), kids);
         }
     }
 }
