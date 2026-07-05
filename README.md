@@ -20,13 +20,14 @@ Add to `Packages/manifest.json`:
 
 ## Package structure
 
-Veauty is split into three packages:
+Veauty is split into four packages:
 
 | Package | Role |
 |---------|------|
 | `com.uzimaru.veauty` (this package) | VTree types, Diff algorithm, Hooks, `[Component]` attribute |
 | [`com.uzimaru.veauty-gameobject`](https://github.com/uzimaru0000/Veauty-GameObject) | Renderer, Patch applicator, `VeautyObject` entry point |
 | [`com.uzimaru.veauty-ugui`](https://github.com/uzimaru0000/Veauty-uGUI) | uGUI widgets, Presets API (`V.Text`, `V.Button`, etc.) |
+| [`com.uzimaru.veauty-uitoolkit`](https://github.com/uzimaru0000/Veauty-UIToolkit) | UI Toolkit elements, `VeautyElement` entry point, style attributes |
 
 ## VTree types
 
@@ -98,3 +99,10 @@ cp bin/Release/netstandard2.1/Veauty.CodeGen.dll ../CodeGen/
 | `RemoveLast` | Remove trailing children |
 | `Remove` | Remove the node |
 | `Reorder` | Reorder keyed children |
+
+## Documentation
+
+- [Manual](Documentation~/com.uzimaru.veauty.md) — getting started, architecture, hooks, function components, diffing
+- [API reference](Documentation~/api-reference.md) — every public type and member
+- [Agent guide](AGENTS.md) — rules, patterns and pitfalls for coding agents
+- [Changelog](CHANGELOG.md)

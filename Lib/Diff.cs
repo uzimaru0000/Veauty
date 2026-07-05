@@ -5,8 +5,27 @@ using Veauty.VTree;
 
 namespace Veauty
 {
+    /// <summary>
+    /// Computes the minimal set of patches that transforms one virtual tree into another.
+    /// </summary>
+    /// <typeparam name="T">The host object type (e.g. <c>GameObject</c>).</typeparam>
     public static class Diff<T>
     {
+        /// <summary>
+        /// Diffs two virtual trees and returns the patches that turn <paramref name="x"/>
+        /// into <paramref name="y"/>.
+        /// </summary>
+        /// <param name="x">The old (currently rendered) tree.</param>
+        /// <param name="y">The new tree.</param>
+        /// <returns>Patches ordered by pre-order index, ready for the patch applicator.</returns>
+        /// <exception cref="InvalidOperationException">Either tree contains a <see cref="FunctionComponentNode"/>; resolve trees with <see cref="HookRuntime.Resolve{T}(IVTree)"/> first.</exception>
+        /// <exception cref="ArgumentException">A tree contains an unsupported <see cref="IVTree"/> implementation.</exception>
+        /// <remarks>
+        /// Patch indices follow the pre-order contract defined by
+        /// <see cref="IVTree.GetDescendantsCount"/>: node 0 is the root and each child occupies
+        /// the index right after its previous sibling's subtree. When a plain node meets a keyed
+        /// node, the keyed side is de-keyed and diffed positionally instead of redrawn.
+        /// </remarks>
         public static IPatch<T>[] Calc(IVTree x, IVTree y)
         {
             var patches = new List<IPatch<T>>();

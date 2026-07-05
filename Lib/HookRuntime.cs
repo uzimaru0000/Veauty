@@ -5,6 +5,20 @@ using Veauty.VTree;
 
 namespace Veauty
 {
+    /// <summary>
+    /// Owns function-component instances and their hook state. A host (e.g.
+    /// <c>VeautyObject</c> in the GameObject package) creates one runtime per mounted tree,
+    /// calls <see cref="Resolve{T}(IVTree)"/> before every diff to expand
+    /// <see cref="FunctionComponentNode"/>s into concrete nodes, calls
+    /// <see cref="CommitEffects"/> after patches are applied, and <see cref="Dispose"/> on teardown.
+    /// </summary>
+    /// <remarks>
+    /// The "current runtime" used by <see cref="Hooks"/> is stored in a <c>[ThreadStatic]</c>
+    /// field that is only set while a component's render function executes (and restored in a
+    /// <c>finally</c>, so nested components work). Component identity is derived from the
+    /// render path (child index / key / component token), so a component keeps its state as
+    /// long as it stays at the same position — or the same key — in the tree.
+    /// </remarks>
     public sealed class HookRuntime
     {
         [ThreadStatic] private static HookRuntime current;
@@ -15,6 +29,11 @@ namespace Veauty
         private ComponentInstance currentInstance;
         private int currentHookIndex;
 
+        /// <summary>Initializes a runtime.</summary>
+        /// <param name="requestRender">
+        /// Callback invoked whenever <see cref="State{T}.Set(T)"/> is called; the host should
+        /// schedule a re-render (resolve + diff + patch + commit). Defaults to a no-op.
+        /// </param>
         public HookRuntime(Action requestRender = null)
         {
             this.requestRender = requestRender ?? (() => {});
@@ -33,6 +52,23 @@ namespace Veauty
             }
         }
 
+        /// <summary>
+        /// Recursively renders every <see cref="FunctionComponentNode"/> in <paramref name="tree"/>
+        /// and returns an equivalent tree containing only concrete nodes, ready for
+        /// <see cref="Diff{T}.Calc(IVTree, IVTree)"/>.
+        /// </summary>
+        /// <typeparam name="T">The host object type (e.g. <c>GameObject</c>).</typeparam>
+        /// <param name="tree">The tree to resolve; may itself be a function component node.</param>
+        /// <returns>A new tree in which every function component has been replaced by its rendered output.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="tree"/> is <c>null</c>.</exception>
+        /// <exception cref="InvalidOperationException">A component's render function returned <c>null</c>, or a hook rule was violated during rendering.</exception>
+        /// <exception cref="ArgumentException">The tree contains an unsupported <see cref="IVTree"/> implementation.</exception>
+        /// <remarks>
+        /// Each call increments an internal render version; component instances not visited by
+        /// the latest call are considered unmounted and are cleaned up by the next
+        /// <see cref="CommitEffects"/>. Both trees passed to <c>Diff.Calc</c> must be resolved —
+        /// diffing a raw <see cref="FunctionComponentNode"/> throws.
+        /// </remarks>
         public IVTree Resolve<T>(IVTree tree)
         {
             if (tree == null)
@@ -44,6 +80,16 @@ namespace Veauty
             return this.ResolveTree<T>(tree, RenderPath.Root);
         }
 
+        /// <summary>
+        /// Runs all effects staged during the most recent <see cref="Resolve{T}(IVTree)"/> and
+        /// cleans up components that were unmounted by that render.
+        /// </summary>
+        /// <remarks>
+        /// For every still-mounted instance, each pending effect first invokes the previous
+        /// cleanup (if any), then runs and stores the new cleanup. Instances whose last-seen
+        /// render version is stale run all of their cleanups and are removed. Call this after
+        /// applying patches so effects observe the updated host tree.
+        /// </remarks>
         public void CommitEffects()
         {
             var unmounted = new List<string>();
@@ -68,6 +114,10 @@ namespace Veauty
             }
         }
 
+        /// <summary>
+        /// Runs the stored cleanup of every effect in every component instance and discards all
+        /// hook state. Call when the mounted tree is destroyed.
+        /// </summary>
         public void Dispose()
         {
             foreach (var instance in this.instances.Values)

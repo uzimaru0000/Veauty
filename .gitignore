@@ -68,3 +68,7 @@ crashlytics-build.properties
 
 
 # End of https://www.gitignore.io/api/unity
+
+# SourceGenerator build artifacts
+SourceGenerator~/bin/
+SourceGenerator~/obj/

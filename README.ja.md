@@ -20,13 +20,14 @@ Unity 向け Virtual DOM 実装。React ライクな宣言的 API で、仮想�
 
 ## パッケージ構成
 
-Veauty は 3 つのパッケージで構成されています:
+Veauty は 4 つのパッケージで構成されています:
 
 | パッケージ | 役割 |
 |-----------|------|
 | `com.uzimaru.veauty` (このパッケージ) | VTree 型定義、Diff アルゴリズム、Hooks、`[Component]` 属性 |
 | [`com.uzimaru.veauty-gameobject`](https://github.com/uzimaru0000/Veauty-GameObject) | Renderer、Patch 適用、`VeautyObject` エントリーポイント |
 | [`com.uzimaru.veauty-ugui`](https://github.com/uzimaru0000/Veauty-uGUI) | uGUI ウィジェット、Presets API (`V.Text`, `V.Button` 等) |
+| [`com.uzimaru.veauty-uitoolkit`](https://github.com/uzimaru0000/Veauty-UIToolkit) | UI Toolkit 要素、`VeautyElement` エントリーポイント、スタイル属性 |
 
 ## VTree 型
 
@@ -98,3 +99,10 @@ cp bin/Release/netstandard2.1/Veauty.CodeGen.dll ../CodeGen/
 | `RemoveLast` | 末尾の子ノードを削除 |
 | `Remove` | ノードを削除 |
 | `Reorder` | キー付き子ノードの並べ替え |
+
+## ドキュメント
+
+- [マニュアル](Documentation~/ja/com.uzimaru.veauty.md) — はじめに、アーキテクチャ、Hooks、関数コンポーネント、差分検出
+- [API リファレンス](Documentation~/ja/api-reference.md) — すべての公開型とメンバー
+- [エージェントガイド](AGENTS.md) — コーディングエージェント向けのルールと注意点 (英語)
+- [Changelog](CHANGELOG.md)

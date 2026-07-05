@@ -1,0 +1,21 @@
+# Veauty
+
+> Renderer-agnostic core of the Veauty Virtual DOM for Unity: virtual tree types, diff/patch algorithm, Hooks, and the [Component] function-component system.
+
+The package defines UI trees (`Node`, `KeyedNode`, `FunctionComponentNode`), computes patches with `Diff<T>.Calc`, and manages component state via `HookRuntime` + `Hooks.UseState/UseRef/UseEffect`. Rendering to GameObjects lives in `com.uzimaru.veauty-gameobject`; uGUI widgets in `com.uzimaru.veauty-ugui`.
+
+## Docs
+
+- [Manual](Documentation~/com.uzimaru.veauty.md): entry-point manual
+- [Getting started](Documentation~/getting-started.md): install + minimal manual render/update cycle
+- [Architecture](Documentation~/architecture.md): resolve → diff → patch → commit data flow
+- [Hooks](Documentation~/hooks.md): UseState/UseRef/UseEffect, rules of hooks, effect timing and cleanup
+- [Function components](Documentation~/function-components.md): [Component] attribute, FunctionComponents, ILPostProcessor codegen
+- [Diffing](Documentation~/diffing.md): diff algorithm, patch types, pre-order index contract, keyed diffing
+- [API reference](Documentation~/api-reference.md): full public API
+- [Agent guide](AGENTS.md): rules and pitfalls for coding agents
+
+## Optional
+
+- [日本語ドキュメント](Documentation~/ja/com.uzimaru.veauty.md): Japanese manual
+- [Changelog](CHANGELOG.md): version history
