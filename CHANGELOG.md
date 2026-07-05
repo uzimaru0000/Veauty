@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-07-06
+
+### Added
+- Package documentation under `Documentation~/` (manual, getting started, architecture, hooks, function components, diffing, API reference) with Japanese translations under `Documentation~/ja/`.
+- XML documentation comments (`///`) on all public APIs in `Lib/`.
+- `AGENTS.md`, `CLAUDE.md`, and `llms.txt` for coding agents.
+- This changelog.
+- `license` field (MIT) in `package.json`.
+
+### Changed
+- README: added Documentation section; package table now lists all four packages (including `com.uzimaru.veauty-uitoolkit`).
+
 ## [0.5.0] - 2026-07-01
 
 ### Added
